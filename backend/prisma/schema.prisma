@@ -61,7 +61,6 @@ model User {
   noTelp      String     @map("no_telp") @db.VarChar(20)
   fotoProfil  String?    @map("foto_profil") @db.VarChar(255)
 
-  // Relasi
   toko             TokoSeller?       @relation("PemilikToko")
   tokoDiverifikasi TokoSeller[]      @relation("AdminPemeriksa")
   alamatPengiriman AlamatPengiriman[]
