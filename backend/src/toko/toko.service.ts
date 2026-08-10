@@ -51,4 +51,31 @@ export class TokoService {
       status: result.toko.statusVerif,
     };
   }
+
+  async verifikasiToko(
+    tokoId: number,
+    status: 'Approved' | 'Rejected',
+    alasanPenolakan?: string,
+  ) {
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { id: tokoId },
+    });
+
+    if (!toko) {
+      throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    const updateToko = await this.prisma.tokoSeller.update({
+      where: { id: tokoId },
+      data: {
+        statusVerif: status,
+        alasanPenolakan: status === 'Rejected' ? alasanPenolakan : null,
+      },
+    });
+
+    return {
+      message: `Status toko berhasil diubah menjadi ${status}`,
+      toko: updateToko,
+    };
+  }
 }

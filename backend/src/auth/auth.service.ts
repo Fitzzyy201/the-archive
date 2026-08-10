@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -82,5 +87,20 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async getProfile(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        toko: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User tidak ditemukan');
+    }
+
+    return user;
   }
 }
