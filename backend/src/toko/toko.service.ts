@@ -36,8 +36,6 @@ export class TokoService {
           noHp: dto.noHp,
           noRekening: dto.noRekening,
           fotoKtp: dto.fotoKtp,
-          nik: dto.nik,
-          npwp: dto.npwp,
           fotoSkck: dto.fotoSkck,
           statusVerif: 'Pending',
         },
