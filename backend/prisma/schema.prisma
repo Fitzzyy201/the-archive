@@ -5,268 +5,203 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-  }
-
-enum Role {
-  ADMIN
-  SELLER
-  BUYER
 }
 
-enum StatusVerifikasi {
-  PENDING
-  APPROVED
-  REJECTED
+enum Role{
+  Admin
+  Buyer
+  Seller
 }
 
-model User {
-  id         Int     @id @default(autoincrement()) @map("id_user")
-  nama       String
-  email      String   @unique
-  password   String
-  role       Role     @default(BUYER)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  noTelp      String
-  fotoProfil  String?
-  statusAkun  Boolean @default(true)
-
-  // Jika user adalah SELLER
-  toko TokoSeller?
-
-  // Jika user adalah ADMIN
-  tokoDiperiksa TokoSeller[] @relation("AdminVerifikasi")
-
-  alamatPengiriman AlamatPengiriman[]
-
-  cart Cart[]
-
-  transaksi Transaksi[]
-
-  komplainDitangani Komplain[] @relation("AdminKomplain")
-
-  logKeuangan LogKeuangan[]
-
-  ulasan Ulasan[]
+enum StatusAkun {
+  Aktif
+  Suspend
 }
 
-model TokoSeller {
-  id                 Int      @id @default(autoincrement())
-  namaToko           String
-  kota               String
-  noHp               String
-  noRekening         String
-  fotoKtp            String
-  fotoSkck           String
-  statusVerifikasi   StatusVerifikasi @default(PENDING)
-  alasanPenolakan    String?
-
-  // Pemilik toko (Seller)
-  userId             Int      @unique
-  user               User     @relation(fields: [userId], references: [id])
-
-  // Admin yang memverifikasi
-  diperiksaOlehId    Int?
-  admin              User?    @relation("AdminVerifikasi", fields: [diperiksaOlehId], references: [id])
-
-// Relasi ke produk
-  produk             Produk[]
-
-  createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+enum StatusVerif {
+  Pending
+  Approved
+  Rejected
 }
 
 enum StatusProduk {
-  AKTIF
-  NONAKTIF
+  Aktif
+  Nonaktif
 }
 
-model Produk {
-  id               Int            @id @default(autoincrement())
-  namaProduk       String
-  deskripsi        String
-  harga            Int
-  stok             Int
-  ukuranDimensi    String
-  fotoProduk       String
-  defect           Boolean
-  statusProduk     StatusProduk   @default(AKTIF)
-
-  // Relasi ke toko
-  tokoId           Int
-  toko             TokoSeller     @relation(fields: [tokoId], references: [id])
-
-  cart Cart[]
-
-  detailTransaksi DetailTransaksi[]
-
-  ulasan Ulasan[]
-
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-}
-
-model AlamatPengiriman {
-  id                Int      @id @default(autoincrement())
-  namaPenerima      String
-  noHpPenerima      String
-  kotaPenerima      String
-  alamatLengkap     String
-  catatanKurir      String?
-
-  userId            Int
-  user              User @relation(fields: [userId], references: [id])
-
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  transaksi Transaksi[]
-}
-
-model Cart {
-  id        Int      @id @default(autoincrement())
-  qty       Int
-
-  // Relasi ke User (Buyer)
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-
-  // Relasi ke Produk
-  produkId  Int
-  produk    Produk   @relation(fields: [produkId], references: [id])
-
-  @@unique([userId, produkId])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-}
-
-  enum StatusTransaksi {
-  MENUNGGU_PEMBAYARAN
-  DIPROSES
-  DIKIRIM
-  SELESAI
-  DIBATALKAN
-}
-
-  model Transaksi {
-  id                Int      @id @default(autoincrement())
-  kodeTransaksi     String   @unique
-
-  totalHarga        Int
-  ongkir            Int
-  biayaAdmin        Int
-  totalBayar        Int
-
-  metodePembayaran  String
-  status            StatusTransaksi @default(MENUNGGU_PEMBAYARAN)
-
-  buyerId           Int
-  buyer             User @relation(fields: [buyerId], references: [id])
-
-  alamatId          Int
-  alamat            AlamatPengiriman @relation(fields: [alamatId], references: [id])
-
-  snapToken String?
-  orderId String? @unique
-
-
-  detail            DetailTransaksi[]
-
-  komplain          Komplain?
-
-logKeuangan LogKeuangan[]
-
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model DetailTransaksi {
-  id             Int @id @default(autoincrement())
-
-  qty            Int
-  harga          Int
-  subtotal       Int
-
-  transaksiId    Int
-  transaksi      Transaksi @relation(fields: [transaksiId], references: [id])
-
-  produkId       Int
-  produk         Produk @relation(fields: [produkId], references: [id])
-
-  namaProduk String
-
-  fotoProduk String
+enum StatusPesanan {
+  BelumBayar
+  Diproses
+  Dikirim
+  Selesai
+  Dikomplain
+  Batal
 }
 
 enum StatusKomplain {
-  MENUNGGU
-  DIPROSES
-  DITERIMA
-  DITOLAK
-  SELESAI
-}
-
-model Komplain {
-  id                 Int      @id @default(autoincrement())
-
-  alasanKomplain     String
-  buktiUrl            String
-
-  status             StatusKomplain @default(MENUNGGU)
-
-  keputusanAdmin     String?
-
-  transaksiId        Int      @unique
-  transaksi          Transaksi @relation(fields: [transaksiId], references: [id])
-
-  adminId            Int?
-  admin              User? @relation("AdminKomplain", fields: [adminId], references: [id])
-
-  balasanSeller String?
-
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  Menunggu
+  DalamProses
+  Disetujui
+  Ditolak
 }
 
 enum JenisTransaksi {
-  PEMBAYARAN
-  PENCAIRAN
-  REFUND
-  POTONGAN_ADMIN
+  PencairanSeller
+  FeeAdmin
+  RefundBuyer
+  WithdrawAdmin
+}
+
+model User {
+  id          Int        @id @default(autoincrement()) @map("id_user")
+  email       String     @unique @db.VarChar(100)
+  password    String     @db.VarChar(255)
+  role        Role       @default(Buyer)
+  statusAkun  StatusAkun @default(Aktif) @map("status_akun")
+  noTelp      String     @map("no_telp") @db.VarChar(20)
+  fotoProfil  String?    @map("foto_profil") @db.VarChar(255)
+
+  // Relasi
+  toko             TokoSeller?       @relation("PemilikToko")
+  tokoDiverifikasi TokoSeller[]      @relation("AdminPemeriksa")
+  alamatPengiriman AlamatPengiriman[]
+  cart             Cart[]
+  transaksiBuyer   Transaksi[]       @relation("BuyerTransaksi")
+  komplainDitangani Komplain[]       @relation("AdminKomplain")
+  logKeuangan      LogKeuangan[]
+  ulasanDiberikan Ulasan[] @relation("BuyerUlasan")
+
+  @@map("user")
+}
+
+model TokoSeller {
+  id              Int         @id @default(autoincrement()) @map("id_toko")
+  userId          Int         @unique @map("id_user")
+  diperiksaOleh   Int?        @map("diperiksa_oleh")
+  namaToko        String      @map("nama_toko") @db.VarChar(100)
+  kota            String      @db.VarChar(100)
+  noHp            String      @map("no_hp") @db.VarChar(20)
+  noRekening      String      @map("no_rekening") @db.VarChar(50)
+  fotoKtp         String      @map("foto_ktp") @db.VarChar(255)
+  fotoSkck        String      @map("foto_skck") @db.VarChar(255)
+  statusVerif     StatusVerif @default(Pending) @map("status_verif")
+  alasanPenolakan String?     @map("alasan_penolakan") @db.Text
+  saldoToko       Int         @default(0) @map("saldo_toko")
+
+  // Relasi
+  user      User        @relation("PemilikToko", fields: [userId], references: [id])
+  admin     User?       @relation("AdminPemeriksa", fields: [diperiksaOleh], references: [id])
+  produk    Produk[]
+  transaksi Transaksi[]
+
+  @@map("toko_seller")
+}
+
+model Produk {
+  id            Int          @id @default(autoincrement()) @map("id_produk")
+  tokoId        Int          @map("id_toko")
+  namaProduk    String       @map("nama_produk") @db.VarChar(150)
+  deskripsi     String       @db.Text
+  harga         Int
+  stok          Int
+  ukuranDimensi String       @map("ukuran_dimensi") @db.VarChar(50)
+  fotoProduk    String       @map("foto_produk") @db.VarChar(255)
+  defect        Boolean      @default(false)
+  statusProduk  StatusProduk @default(Aktif) @map("status_produk")
+
+  // Relasi
+  toko TokoSeller @relation(fields: [tokoId], references: [id])
+  cart Cart[]
+  ulasan Ulasan[]
+
+  @@map("produk")
+}
+
+model AlamatPengiriman {
+  id            Int    @id @default(autoincrement()) @map("id_alamat")
+  userId        Int    @map("id_user")
+  namaPenerima  String @map("nama_penerima") @db.VarChar(100)
+  kotaPenerima  String @map("kota_penerima") @db.VarChar(100)
+  alamatLengkap String @map("alamat_lengkap") @db.Text
+  catatanKurir  String? @map("catatan_kurir") @db.Text
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("alamat_pengiriman")
+}
+
+model Cart {
+  id       Int @id @default(autoincrement()) @map("id_cart")
+  produkId Int @map("id_produk")
+  userId   Int @map("id_user")
+  qty      Int
+
+  produk Produk @relation(fields: [produkId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("cart")
+}
+
+model Transaksi {
+  id            Int           @id @default(autoincrement()) @map("id_transaksi")
+  buyerId       Int           @map("id_buyer")
+  tokoId        Int           @map("id_toko")
+  totalHarga    Int           @map("total_harga")
+  statusPesanan StatusPesanan @default(BelumBayar) @map("status_pesanan")
+  
+  waktuTransaksi        DateTime  @default(now()) @map("waktu_transaksi")
+  batasWaktuTransaksi   DateTime? @map("batas_waktu_transaksi") // Buat Cron Job 15 Menit
+  batasWaktuKomplain    DateTime? @map("batas_waktu_komplain")  // Buat Cron Job 2x24 Jam
+
+  // Relasi
+  buyer       User          @relation("BuyerTransaksi", fields: [buyerId], references: [id])
+  toko        TokoSeller    @relation(fields: [tokoId], references: [id])
+  komplain    Komplain?
+  logKeuangan LogKeuangan[]
+
+  @@map("transaksi")
+}
+
+model Komplain {
+  id              Int            @id @default(autoincrement()) @map("id_komplain")
+  transaksiId     Int            @unique @map("id_transaksi")
+  ditanganiOleh   Int?           @map("ditangani_oleh")
+  alasanKomplain  String         @map("alasan_komplain") @db.Text
+  fotoVideoBukti  String         @map("foto_video_bukti") @db.VarChar(255)
+  statusKomplain  StatusKomplain @default(Menunggu) @map("status_komplain")
+  keputusanAdmin  String?        @map("keputusan_admin") @db.Text
+
+  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
+  admin     User?     @relation("AdminKomplain", fields: [ditanganiOleh], references: [id])
+
+  @@map("komplain")
 }
 
 model LogKeuangan {
-  id          Int      @id @default(autoincrement())
+  id            Int            @id @default(autoincrement()) @map("id_log")
+  transaksiId   Int?           @map("id_transaksi")
+  userId        Int            @map("id_user")
+  jenisTransaksi JenisTransaksi @map("jenis_transaksi")
+  nominal       Int
+  waktuLog      DateTime       @default(now()) @map("waktu_log")
 
-  jenis       JenisTransaksi
+  transaksi Transaksi? @relation(fields: [transaksiId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
 
-  nominal     Int
-
-  transaksiId Int
-  transaksi   Transaksi @relation(fields: [transaksiId], references: [id])
-
-  userId      Int
-  user        User @relation(fields: [userId], references: [id])
-
-  keterangan String?
-
-  createdAt   DateTime @default(now())
+  @@map("log_keuangan")
 }
 
 model Ulasan {
-  id          Int @id @default(autoincrement())
+  id        Int      @id @default(autoincrement()) @map("id_ulasan")
+  buyerId   Int      @map("id_buyer")
+  produkId  Int      @map("id_produk")
+  rating    Int
+  komentar  String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
 
-  rating      Int
+  // Relasi
+  buyer  User   @relation("BuyerUlasan", fields: [buyerId], references: [id])
+  produk Produk @relation(fields: [produkId], references: [id])
 
-  komentar    String?
-
-  buyerId     Int
-  buyer       User @relation(fields:[buyerId], references:[id])
-
-  produkId    Int
-  produk      Produk @relation(fields:[produkId], references:[id])
-
-  createdAt   DateTime @default(now())
+  @@map("ulasan")
 }
