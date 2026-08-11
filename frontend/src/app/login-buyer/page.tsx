@@ -12,10 +12,36 @@ export default function LoginBuyer() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email:", email, "Password:", password);
-    alert(`Coba login dengan email: ${email}`);
+
+    try {
+      const response = await fetch("http://localhost:3001/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Login Berhasil! yeeyyy");
+      console.log("Token JWT:", data.access_token);
+      console.log("Data User:", data.user);
+
+      localStorage.setItem("token", data.access_token);
+    } else {
+      alert(`Gagal Login: ${data.message}`);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Gagal terhubung ke server backend! Pastikan backend sudah jalan");
+  }
   };
 
   return (

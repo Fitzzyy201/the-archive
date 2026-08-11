@@ -38,7 +38,6 @@ export class AuthService {
         email: dto.email,
         password: hashedPassword,
         noTelp: dto.noTelp,
-        // Properti nama disimpan sementara di DB jika ada kolomnya, atau hanya data dasar user
       },
     });
 
@@ -64,6 +63,9 @@ export class AuthService {
         HttpStatus.UNAUTHORIZED,
       );
     }
+
+    console.log('Data Payload dari Frontend:', dto);
+    console.log('Data User dari Database:', user);
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
