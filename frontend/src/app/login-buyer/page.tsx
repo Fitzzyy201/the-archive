@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Home, Bell, User } from "lucide-react";
 import { Playfair_Display, Inter } from "next/font/google";
 
@@ -11,6 +12,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function LoginBuyer() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +32,13 @@ export default function LoginBuyer() {
     const data = await response.json();
 
     if (response.ok) {
-      alert("Login Berhasil! yeeyyy");
-      console.log("Token JWT:", data.access_token);
-      console.log("Data User:", data.user);
-
       localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      alert("Login Berhasil!!!");
+
+      router.push("/");
+
     } else {
       alert(`Gagal Login: ${data.message}`);
     }
