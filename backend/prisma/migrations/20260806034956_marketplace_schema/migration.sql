@@ -21,7 +21,7 @@ CREATE TABLE `TokoSeller` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `namaToko` VARCHAR(191) NOT NULL,
     `kota` VARCHAR(191) NOT NULL,
-    `noHp` VARCHAR(191) NOT NULL,
+    `noTelp` VARCHAR(191) NOT NULL,
     `noRekening` VARCHAR(191) NOT NULL,
     `fotoKtp` VARCHAR(191) NOT NULL,
     `fotoSkck` VARCHAR(191) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE `Produk` (
 CREATE TABLE `AlamatPengiriman` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `namaPenerima` VARCHAR(191) NOT NULL,
-    `noHpPenerima` VARCHAR(191) NOT NULL,
+    `noTelpPenerima` VARCHAR(191) NOT NULL,
     `kotaPenerima` VARCHAR(191) NOT NULL,
     `alamatLengkap` VARCHAR(191) NOT NULL,
     `catatanKurir` VARCHAR(191) NULL,

@@ -2,12 +2,43 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Home, Package, ShoppingBag, User, Upload } from "lucide-react";
 import { Playfair_Display, Inter } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
+const DAFTAR_KOTA = [
+  "Bandung",
+  "Bandung Barat",
+  "Bekasi",
+  "Bogor",
+  "Ciamis",
+  "Cianjur",
+  "Cirebon",
+  "Depok",
+  "Garut",
+  "Indramayu",
+  "Jakarta Barat",
+  "Jakarta Pusat",
+  "Jakarta Selatan",
+  "Jakarta Timur",
+  "Jakarta Utara",
+  "Karawang",
+  "Kuningan",
+  "Majalengka",
+  "Pangandaran",
+  "Purwakarta",
+  "Subang",
+  "Sukabumi",
+  "Sumedang",
+  "Surabaya",
+  "Tangerang",
+  "Tangerang Selatan",
+  "Tasikmalaya",
+  "Yogyakarta",
+];
+
 
 export default function RegistrasiSeller() {
   const [shopName, setShopName] = useState("");
@@ -21,10 +52,51 @@ export default function RegistrasiSeller() {
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [npwpFile, setNpwpFile] = useState<File | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ shopName, email, city, phone, bankAccount, nik, npwp, password, ktpFile, npwpFile });
-    alert(`Daftar toko: ${shopName}`);
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Anda harus login terlebih dahulu sebelum membuka toko!");
+      router.push("/login-buyer");
+      return;
+    }
+
+    try {
+      // 2. Nembak API backend register toko
+      const response = await fetch("http://localhost:3001/toko/register-seller", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Kirim JWT Token
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          namaToko: shopName,
+          kota: city,
+          noRekening: bankAccount,
+          deskripsi: `Toko berlokasi di ${city}. NIK: ${nik}`,
+          alamat: `${city} (No. Rek: ${bankAccount})`,
+          noTelp: phone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Pendaftaran Toko Berhasil! 🎉 Menunggu verifikasi admin.");
+        router.push("/profile");
+      } else {
+        alert(`Gagal Mendaftar Toko: ${data.message || "Terjadi kesalahan"}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Gagal terhubung ke backend! Pastikan server NestJS aktif.");
+    }
   };
 
   return (
@@ -38,7 +110,7 @@ export default function RegistrasiSeller() {
 
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
         <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
-          <button className="absolute left-4 sm:left-8">
+          <button className="absolute left-4 sm:left-8" onClick={() => router.back()}>
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-2xl sm:text-3xl font-bold mb-1 text-black">BUKA TOKO</h1>
@@ -58,6 +130,7 @@ export default function RegistrasiSeller() {
                 </label>
                 <input
                   type="text"
+                  required
                   value={shopName}
                   onChange={(e) => setShopName(e.target.value)}
                   placeholder="e.g. Atelier Nàl"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Home, Package, ShoppingBag, User } from "lucide-react";
 import { Playfair_Display, Inter } from "next/font/google";
 
@@ -11,11 +12,14 @@ const inter = Inter({ subsets: ["latin"] });
 export default function LoginSeller() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email:", email, "Password:", password);
-    alert(`Coba login dengan email: ${email}`);
+    setIsLoading(true);
+
   };
 
   return (

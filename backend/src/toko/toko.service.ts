@@ -23,7 +23,7 @@ export class TokoService {
         data: {
           email: dto.email,
           password: hashedPassword,
-          noTelp: dto.noHp,
+          noTelp: dto.noTelp,
           role: 'Seller',
         },
       });
@@ -33,7 +33,7 @@ export class TokoService {
           userId: user.id,
           namaToko: dto.namaToko,
           kota: dto.kota,
-          noHp: dto.noHp,
+          noTelp: dto.noTelp,
           noRekening: dto.noRekening,
           fotoKtp: dto.fotoKtp,
           fotoSkck: dto.fotoSkck,

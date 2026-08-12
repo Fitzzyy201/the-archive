@@ -79,10 +79,10 @@ model TokoSeller {
   diperiksaOleh   Int?        @map("diperiksa_oleh")
   namaToko        String      @map("nama_toko") @db.VarChar(100)
   kota            String      @db.VarChar(100)
-  noHp            String      @map("no_hp") @db.VarChar(20)
+  noTelp          String?      @map("no_telp") @db.VarChar(20)
   noRekening      String      @map("no_rekening") @db.VarChar(50)
-  fotoKtp         String      @map("foto_ktp") @db.VarChar(255)
-  fotoSkck        String      @map("foto_skck") @db.VarChar(255)
+  fotoKtp         String?      @map("foto_ktp") @db.VarChar(255)
+  fotoSkck        String?      @map("foto_skck") @db.VarChar(255)
   statusVerif     StatusVerif @default(Pending) @map("status_verif")
   alasanPenolakan String?     @map("alasan_penolakan") @db.Text
   saldoToko       Int         @default(0) @map("saldo_toko")

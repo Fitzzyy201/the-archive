@@ -1,6 +1,6 @@
 export class CreateTokoDto {
   namaToko!: string;
-  noHp!: string;
+  noTelp!: string;
   email!: string;
   password!: string;
   kota!: string;
