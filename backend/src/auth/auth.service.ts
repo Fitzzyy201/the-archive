@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -17,7 +18,6 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // 1. Logika Register
   async register(dto: RegisterDto) {
     const userExists = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -51,7 +51,6 @@ export class AuthService {
     };
   }
 
-  // 2. Logika Login
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -76,7 +75,6 @@ export class AuthService {
       );
     }
 
-    // Buat Token JWT (Tiket Masuk Digital)
     const payload = { sub: user.id, email: user.email, role: user.role };
     const token = await this.jwtService.signAsync(payload);
 
@@ -104,5 +102,72 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { message: 'Jika email terdaftar, kode OTP akan dikrim.' };
+    }
+
+    if (user.role == 'Admin') {
+      throw new UnauthorizedException(
+        ' Admin tidak diizinkan mereset password melalui jalur ini. ',
+      );
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 10 * 60000);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { otpCode: otp, otpExpires: expires },
+    });
+
+    //  TODO: Nanti bagian ini harus dihubungkan ke layanan email -ini bukan ai tapi gw yg ngetik
+    console.log(`[EMAIL SIMULASI] Kepada: ${email} | Kode OTP anda: ${otp}`);
+
+    return { message: 'Kode OTP telah dikirim ke email anda.' };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (
+      !user ||
+      user.otpCode !== otp ||
+      !user.otpExpires ||
+      user.otpExpires < new Date()
+    ) {
+      throw new UnauthorizedException(
+        'Kode OTP tidak valid atau sudah kadaluarsa.',
+      );
+    }
+    return { message: 'OTP Valid' };
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (
+      !user ||
+      user.otpCode !== otp ||
+      !user.otpExpires ||
+      user.otpExpires < new Date()
+    ) {
+      throw new UnauthorizedException('Sesi reset Password tidak valid.');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        otpCode: null,
+        otpExpires: null,
+      },
+    });
+    return { message: 'Password berhasil diubah. Silakan login' };
   }
 }

@@ -112,7 +112,7 @@ export default function LoginSeller() {
               </div>
 
               <div className="text-right">
-                <Link href="/lupa-seller" className="text-sm underline text-gray-700">
+                <Link href="/lupa-password" className="text-sm underline text-gray-700">
                   Forgot password?
                 </Link>
               </div>

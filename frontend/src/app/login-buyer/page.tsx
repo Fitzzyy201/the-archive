@@ -106,7 +106,7 @@ export default function LoginBuyer() {
                 </div>
 
                 <div className="text-right">
-                  <Link href="/lupa-buyer" className="text-xs font-medium tracking-wide text-black">
+                  <Link href="/lupa-password" className="text-xs font-medium tracking-wide text-black">
                     FORGOT PASSWORD?
                   </Link>
                 </div>

@@ -60,6 +60,8 @@ model User {
   statusAkun  StatusAkun @default(Aktif) @map("status_akun")
   noTelp      String     @map("no_telp") @db.VarChar(20)
   fotoProfil  String?    @map("foto_profil") @db.VarChar(255)
+  otpCode     String?    
+  otpExpires  DateTime?
 
   toko             TokoSeller?       @relation("PemilikToko")
   tokoDiverifikasi TokoSeller[]      @relation("AdminPemeriksa")
