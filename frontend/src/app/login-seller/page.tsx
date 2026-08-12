@@ -19,6 +19,37 @@ export default function LoginSeller() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    try {
+      const response = await fetch("http://localhost:3001/auth/login",{
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
+        if (data.id) localStorage.setItem("userId", data.id);
+
+        alert("Login Seller Berhasil Cuyyy!!");
+
+        router.push("/beranda");
+      } else {
+        alert(`Gagal Login: ${data.message || "Email atau password salah"}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Gagal terhubung ke server backend!");
+    } finally {
+      setIsLoading(false);
+    }
+    
 
   };
 
