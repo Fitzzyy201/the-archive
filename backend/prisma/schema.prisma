@@ -57,6 +57,7 @@ model User {
   email       String     @unique @db.VarChar(100)
   password    String     @db.VarChar(255)
   role        Role       @default(Buyer)
+  username    String?    @unique
   statusAkun  StatusAkun @default(Aktif) @map("status_akun")
   noTelp      String     @map("no_telp") @db.VarChar(20)
   fotoProfil  String?    @map("foto_profil") @db.VarChar(255)
