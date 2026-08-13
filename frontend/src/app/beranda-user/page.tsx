@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,11 +15,11 @@ import {
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 // Data produk — nanti diganti fetch dari backend (produk yang statusnya published)
-// SENGAJA KOSONG karena belum ada toko yang buka/publish produk
+// Masih kosong karena belum ada toko yang buka / publish produk
 type Produk = {
   id: string;
   nama: string;
@@ -41,19 +41,6 @@ const NAV_ITEMS = [
 ];
 
 export default function Beranda() {
-  const [query, setQuery] = useState("");
-
-  const filteredProduk = useMemo(() => {
-    if (!query.trim()) return produkList;
-    const q = query.toLowerCase();
-    return produkList.filter(
-      (p) =>
-        p.nama.toLowerCase().includes(q) ||
-        p.toko.toLowerCase().includes(q) ||
-        p.kota.toLowerCase().includes(q)
-    );
-  }, [query]);
-
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
       {/* Sidebar (desktop) / Bottom Nav (mobile) */}
@@ -72,29 +59,27 @@ export default function Beranda() {
           </p>
 
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-2 border border-black/15 rounded-sm px-4 py-2.5 bg-white focus-within:border-black transition">
+            <div className="flex-1 flex items-center gap-2 border border-black/15 rounded-sm px-4 py-2.5 bg-white">
               <Search className="w-4 h-4 text-black/30 shrink-0" />
               <input
                 type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search Catalogue"
-                className={`${mono.className} flex-1 min-w-0 text-[11px] tracking-[0.1em] uppercase placeholder:text-black/30 outline-none bg-transparent text-black`}
+                className={`${mono.className} flex-1 min-w-0 text-[11px] tracking-[0.1em] uppercase placeholder:text-black/30 outline-none bg-transparent`}
               />
             </div>
 
             <Link
               href="/buka-toko"
-              className="hidden sm:inline-block text-xs font-semibold tracking-wide text-black border border-black rounded-sm px-4 py-2.5 hover:bg-black hover:text-white transition whitespace-nowrap"
+              className={`${mono.className} hidden sm:inline-block text-[10px] font-medium tracking-[0.15em] border border-black/15 rounded-sm px-4 py-2.5 hover:bg-black hover:text-white transition whitespace-nowrap`}
             >
-              Buka Toko
+              BUKA TOKO
             </Link>
 
             <Link
               href="/login"
-              className="text-xs font-semibold tracking-wide bg-black text-white rounded-sm px-4 py-2.5 hover:bg-black/85 transition whitespace-nowrap"
+              className={`${mono.className} text-[10px] font-medium tracking-[0.15em] bg-black text-white rounded-sm px-4 py-2.5 hover:bg-black/85 transition whitespace-nowrap`}
             >
-              Login
+              LOGIN
             </Link>
 
             <Link
@@ -124,11 +109,11 @@ export default function Beranda() {
             </h1>
           </div>
 
-          {filteredProduk.length === 0 ? (
-            <EmptyState hasQuery={query.trim().length > 0} />
+          {produkList.length === 0 ? (
+            <EmptyState />
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-              {filteredProduk.map((produk) => (
+              {produkList.map((produk) => (
                 <ProdukCard key={produk.id} produk={produk} />
               ))}
             </div>
@@ -139,17 +124,15 @@ export default function Beranda() {
   );
 }
 
-function EmptyState({ hasQuery }: { hasQuery: boolean }) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-black/15 rounded-sm">
       <PackageOpen className="w-8 h-8 text-black/20 mb-4" strokeWidth={1.5} />
       <p className={`${playfair.className} text-lg text-black/70 mb-1`}>
-        {hasQuery ? "Produk Tidak Ditemukan" : "Belum Ada Produk"}
+        Belum Ada Produk
       </p>
       <p className="text-xs text-black/40 max-w-xs px-4">
-        {hasQuery
-          ? "Coba kata kunci lain ya."
-          : "Belum ada toko yang publish produk. Coba cek lagi nanti ya."}
+        Belum ada toko yang publish produk. Coba cek lagi nanti ya.
       </p>
     </div>
   );
@@ -173,7 +156,9 @@ function ProdukCard({ produk }: { produk: Produk }) {
             <PackageOpen className="w-6 h-6 text-black/15" strokeWidth={1.5} />
           </div>
         )}
-        <span className="absolute top-2 left-2 bg-black text-white text-[9px] font-semibold tracking-wide px-2 py-1 rounded-sm">
+        <span
+          className={`${mono.className} absolute top-2 left-2 bg-black text-white text-[9px] tracking-[0.1em] px-2 py-1 rounded-sm`}
+        >
           STOCK: {produk.stok}
         </span>
       </div>
@@ -182,14 +167,16 @@ function ProdukCard({ produk }: { produk: Produk }) {
         <p className={`${playfair.className} text-sm font-semibold text-black leading-snug mb-1 line-clamp-1`}>
           {produk.nama.toUpperCase()}
         </p>
-        <p className="text-[11px] font-medium text-black/60 mb-2">
+        <p className={`${mono.className} text-[11px] text-black/60 mb-2`}>
           IDR {produk.harga.toLocaleString("id-ID")}{" "}
           <span className="text-black/30">· SIZE: {produk.size}</span>
         </p>
         <p className="text-[11px] text-black/50 mb-1">
           {produk.toko} · <span className="italic">{produk.kota}</span>
         </p>
-        <p className="text-[10px] text-red-500/80 font-medium">{produk.kondisi}</p>
+        <p className="text-[10px] text-red-500/80">
+          {produk.kondisi}
+        </p>
       </div>
     </Link>
   );
