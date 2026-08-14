@@ -18,10 +18,16 @@ export default function KontrakSeller() {
       alert("Kamu harus menyetujui kontrak terlebih dahulu.");
       return;
     }
-    router.push("/verifikasi-seller");
+
+    localStorage.setItem("agreedToSellerRules", "true");
+
+    alert("Persetujuan diterima! Status pendaftaran toko Anda sekarang PENDING.");
+    router.push("/");
   };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
+      {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
       <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
         <NavItem href="/beranda" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk" icon={<Package className="w-5 h-5" />} label="PRODUK" />
@@ -29,15 +35,16 @@ export default function KontrakSeller() {
         <NavItem href="/profile" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
+      {/* Main Content */}
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
-     
+        {/* Header */}
         <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
-          <button className="absolute left-4 sm:left-8">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={() => router.back()} className="absolute left-4 sm:left-8">
+            <ArrowLeft className="w-5 h-5 text-black" />
           </button>
-         <h2 className="text-xl sm:text-2xl font-bold mb-3 text-black text-center">
-             DIGITAL CONTRACT
-            </h2>
+          <h2 className={`${playfair.className} text-xl sm:text-2xl font-bold text-black text-center`}>
+            DIGITAL CONTRACT
+          </h2>
         </div>
 
         <div className="flex-1 w-full px-6 sm:px-12 md:px-16 py-8 md:flex md:items-center md:justify-center">
@@ -86,7 +93,6 @@ export default function KontrakSeller() {
               memahami, dan menyetujui seluruh syarat dan ketentuan di atas.
             </p>
 
-            
             <label className="flex items-start gap-3 mt-4 cursor-pointer select-none justify-center">
               <input
                 type="checkbox"
@@ -101,7 +107,7 @@ export default function KontrakSeller() {
               onClick={handleContinue}
               className={`w-full rounded-md py-3.5 font-medium mt-5 transition ${
                 agreed
-                  ? "bg-black text-white hover:bg-gray-900"
+                  ? "bg-black text-white hover:bg-gray-900 cursor-pointer"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >
@@ -109,7 +115,7 @@ export default function KontrakSeller() {
             </button>
 
             <Link
-              href="/registrasi-seller"
+              href="/daftar-seller"
               className="block text-center w-full rounded-md py-3.5 font-medium mt-3 border border-gray-300 text-black hover:bg-gray-50 transition"
             >
               KEMBALI

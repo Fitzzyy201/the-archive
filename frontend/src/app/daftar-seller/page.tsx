@@ -89,7 +89,7 @@ export default function RegistrasiSeller() {
 
       if (response.ok) {
         alert("Pendaftaran Toko Berhasil! 🎉 Menunggu verifikasi admin.");
-        router.push("/profile");
+        router.push("/kontrak-seller");
       } else {
         alert(`Gagal Mendaftar Toko: ${data.message || "Terjadi kesalahan"}`);
       }

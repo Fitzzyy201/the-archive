@@ -81,6 +81,8 @@ export class AuthService {
     return {
       message: 'Login berhasil!',
       access_token: token,
+      id: user.id,
+      role: user.role,
       user: {
         id: user.id,
         email: user.email,
