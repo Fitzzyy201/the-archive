@@ -21,7 +21,7 @@ export default function LoginAdmin() {
         setIsLoading(true);
 
         try {
-            //buat nembak endpoint - Fikri bukan ai yaa yg ngetik
+            //buat nembak endpoint - Fikri bukan ai yaa yg ngetik ok  fikri yg ngetik
             const response = await fetch("http://localhost:3001/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json"},
