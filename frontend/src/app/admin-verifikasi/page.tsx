@@ -48,7 +48,7 @@ export default function AdminVerifikasiPage() {
   const fetchPendingSellers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/admin/pending-sellers"); // Sesuaikan port backend jika beda
+      const res = await fetch("http://localhost:3001/admin/pending-sellers"); // Sesuaikan port backend jika beda
       if (res.ok) {
         const data = await res.json();
         setSellers(data);
@@ -72,7 +72,7 @@ export default function AdminVerifikasiPage() {
     if (!confirm(`Apakah Anda yakin ingin ${aksiText} verifikasi toko "${namaToko}"?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/admin/verify-seller/${tokoId}`, {
+      const res = await fetch(`http://localhost:3001/admin/verify-seller/${tokoId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
