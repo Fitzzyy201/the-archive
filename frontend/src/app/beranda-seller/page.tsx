@@ -1,39 +1,63 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, MessageCircle, Home, ShoppingBag, User } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Home, Package, ShoppingBag, User, Plus, PackageSearch } from "lucide-react";
+import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
-
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 type Produk = {
   id: number;
   namaProduk: string;
   harga: number;
   stok: number;
-  ukuranDimensi: string;
   fotoProduk: string;
-  defect: boolean;
   statusProduk: "Aktif" | "Nonaktif";
 };
 
-const toko = {
-  namaToko: "The Diaries Store",
-};
-
-// Produk milik toko ini — kosong dulu, belum ada yang di-publish
-const products: Produk[] = [];
-
 function formatRupiah(angka: number) {
-  return `IDR ${angka.toLocaleString("id-ID")}`;
+  return `Rp ${angka.toLocaleString("id-ID")}`;
 }
 
 export default function BerandaSeller() {
+  const [products, setProducts] = useState<Produk[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    queueMicrotask(async () => {
+      const token = localStorage.getItem("token");
+      const tokoId = localStorage.getItem("tokoId");
+
+      if (token && tokoId) {
+        try {
+          const res = await fetch(`http://localhost:3001/produk/toko/${tokoId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            setProducts(data);
+          }
+        } catch (err) {
+          console.error("Gagal mengambil data produk beranda seller:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    });
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
+      {/* Sidebar */}
       <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
@@ -41,91 +65,79 @@ export default function BerandaSeller() {
         <NavItem href="/profile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
+      {/* Main Area */}
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
-        <div className="flex items-center justify-between px-5 sm:px-10 py-5 border-b">
-          <h1 className={`${playfair.className} text-lg sm:text-xl font-bold tracking-wide text-black`}>
-            {toko.namaToko.toUpperCase()}
+        <div className="px-5 sm:px-10 py-6 border-b border-black/10 bg-white">
+          <h1 className={`${playfair.className} text-2xl sm:text-3xl font-semibold tracking-tight text-black`}>
+            THE DIARIES STORE
           </h1>
-          <button className="p-1">
-            <MessageCircle className="w-5 h-5 text-black" />
-          </button>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
-          {products.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+        <div className="flex-1 w-full px-5 sm:px-10 md:px-16 py-8">
+          <div className="w-full md:max-w-2xl mx-auto">
+            {isLoading ? (
+              <div className="py-10 text-center text-xs text-black/40 animate-pulse">
+                Memuat ringkasan toko...
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-col items-center text-center py-16 px-6">
+                <div className="relative w-16 h-16 flex items-center justify-center mb-6">
+                  <div className="absolute inset-0 border border-black/15 rotate-45" />
+                  <PackageSearch className="w-6 h-6 text-black/40 relative z-10" strokeWidth={1.5} />
+                </div>
+                <h2 className={`${playfair.className} text-xl font-bold text-black mb-2`}>
+                  BELUM ADA PRODUK YANG DI PUBLISH
+                </h2>
+                <p className={`${mono.className} text-[10px] tracking-widest text-black/40 mb-6 uppercase`}>
+                  Your collection is currently empty
+                </p>
+                <Link
+                  href="/tambah-produk"
+                  className="bg-black text-white text-xs font-semibold px-6 py-3 rounded-sm hover:bg-black/85 transition"
+                >
+                  + TAMBAH PRODUK
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-baseline justify-between mb-5 pb-2 border-b border-black/10">
+                  <h2 className="text-xs font-semibold tracking-[0.15em] text-black/70">
+                    KOLLEKSI PRODUK TAMPIL
+                  </h2>
+                  <p className={`${mono.className} text-[11px] text-black/40`}>
+                    {String(products.length).padStart(2, "0")} ITEMS
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex gap-4 bg-white border border-black/10 rounded-sm p-3"
+                    >
+                      <div className="w-16 h-16 bg-black/5 rounded-sm overflow-hidden shrink-0">
+                        <img
+                          src={product.fotoProduk}
+                          alt={product.namaProduk}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center">
+                        <h3 className="text-sm font-semibold text-black">{product.namaProduk}</h3>
+                        <p className="text-xs text-black/60">{formatRupiah(product.harga)}</p>
+                        <p className={`${mono.className} text-[10px] text-black/35 mt-1`}>
+                          STOK: {product.stok}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center text-center max-w-xs mx-auto">
-      <div className="relative w-20 h-20 flex items-center justify-center mb-8">
-        <div className="absolute inset-0 border border-gray-300 rotate-45" />
-        <Package className="w-8 h-8 text-black relative z-10" strokeWidth={1.5} />
-      </div>
-
-      <h2 className={`${playfair.className} text-xl sm:text-2xl font-bold text-black leading-snug mb-3`}>
-        BELUM ADA
-        <br />
-        PRODUK YANG
-        <br />
-        DI PUBLISH
-      </h2>
-
-      <div className="w-10 h-px bg-black mb-3" />
-
-      <p className="text-[11px] tracking-[0.15em] text-gray-400 mb-8">
-        YOUR COLLECTION IS CURRENTLY EMPTY
-      </p>
-
-      <Link
-        href="/tambah-produk"
-        className="bg-black text-white text-sm font-medium rounded-md px-8 py-3 hover:bg-gray-900 transition"
-      >
-        + TAMBAH PRODUK
-      </Link>
-    </div>
-  );
-}
-
-function ProductCard({ product }: { product: Produk }) {
-  return (
-    <Link href={`/produk-seller/${product.id}`} className="group block">
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-100 mb-2">
-        <img
-          src={product.fotoProduk}
-          alt={product.namaProduk}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <span className="absolute top-2 left-2 bg-white/90 text-[10px] font-semibold px-2 py-0.5 rounded">
-          STOCK: {product.stok}
-        </span>
-        {product.statusProduk === "Nonaktif" && (
-          <span className="absolute top-2 right-2 bg-black text-white text-[10px] font-semibold px-2 py-0.5 rounded">
-            NONAKTIF
-          </span>
-        )}
-      </div>
-      <h3 className="text-sm font-semibold text-black leading-snug">{product.namaProduk}</h3>
-      <div className="flex items-center justify-between text-xs text-gray-500 mt-0.5">
-        <span>{formatRupiah(product.harga)}</span>
-        <span>SIZE: {product.ukuranDimensi}</span>
-      </div>
-      <p className="text-[11px] text-gray-400 mt-0.5">
-        {product.defect ? "⚠ Ada Defect" : "✓ No Defect"}
-      </p>
-    </Link>
   );
 }
 

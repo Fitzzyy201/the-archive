@@ -1,14 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Package, ShoppingBag, User, Plus, PackageSearch } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Home, Package, ShoppingBag, User, Plus, PackageSearch, Trash2, X, Eye } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
+// Tipe data di-update biar mencakup deskripsi, dimensi, dan defect
 type Produk = {
   id: number;
   namaProduk: string;
@@ -16,27 +18,107 @@ type Produk = {
   stok: number;
   fotoProduk: string;
   statusProduk: "Aktif" | "Nonaktif";
+  deskripsi: string;
+  ukuranDimensi: string;
+  defect: boolean;
 };
-
-const products: Produk[] = [];
 
 function formatRupiah(angka: number) {
   return `Rp ${angka.toLocaleString("id-ID")}`;
 }
 
 export default function ProdukSeller() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Produk[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // State buat nyimpen data produk yang mau dilihat detailnya (Read More)
+  const [selectedProduct, setSelectedProduct] = useState<Produk | null>(null);
+
+  const fetchProducts = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
+    const tokoId = localStorage.getItem("tokoId");
+
+    if (role !== "Seller") {
+      router.push("/");
+      return;
+    }
+
+    if (token && tokoId) {
+      try {
+        const res = await fetch(`http://localhost:3001/produk/toko/${tokoId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data produk:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      fetchProducts();
+    });
+  }, [router]);
+
+  const handleToggleStatus = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:3001/produk/${id}/toggle-status`, {
+        method: "PATCH",
+      });
+
+      if (res.ok) {
+        fetchProducts(); 
+      } else {
+        alert("Gagal mengubah status produk.");
+      }
+    } catch (error) {
+      console.error("Error toggle status:", error);
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus produk ini secara permanen?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/produk/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        fetchProducts(); 
+      } else {
+        alert("Gagal menghapus produk.");
+      }
+    } catch (error) {
+      console.error("Error delete product:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-  
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
+      {/* Sidebar */}
+      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3 relative z-10">
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
         <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
         <NavItem href="/profile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
-     
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+      {/* Content */}
+      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col relative`}>
         <div className="px-5 sm:px-10 py-6 border-b border-black/10 bg-white">
           <p className={`${mono.className} text-[10px] tracking-[0.25em] text-black/40 mb-2`}>
             THE ARCHIVE · SELLER PANEL
@@ -64,19 +146,36 @@ export default function ProdukSeller() {
               </p>
             </div>
 
-    
-            {products.length === 0 ? (
+            {isLoading ? (
+              <div className="py-10 text-center text-xs text-black/40 animate-pulse">
+                Memuat katalog produk...
+              </div>
+            ) : products.length === 0 ? (
               <EmptyState />
             ) : (
               <div className="space-y-5">
                 {products.map((product) => (
-                  <ProductRow key={product.id} product={product} />
+                  <ProductRow
+                    key={product.id}
+                    product={product}
+                    onToggleStatus={handleToggleStatus}
+                    onDelete={handleDeleteProduct}
+                    onViewDetail={() => setSelectedProduct(product)}
+                  />
                 ))}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* MODAL POP-UP DETAIL PRODUK */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
+      )}
     </div>
   );
 }
@@ -98,12 +197,32 @@ function EmptyState() {
   );
 }
 
-function ProductRow({ product }: { product: Produk }) {
+function ProductRow({
+  product,
+  onToggleStatus,
+  onDelete,
+  onViewDetail,
+}: {
+  product: Produk;
+  onToggleStatus: (id: number) => void;
+  onDelete: (id: number) => void;
+  onViewDetail: () => void;
+}) {
+  const isValidUrl =
+    product.fotoProduk &&
+    (product.fotoProduk.startsWith("http://") ||
+      product.fotoProduk.startsWith("https://") ||
+      product.fotoProduk.startsWith("data:image"));
+
+  const displayImage = isValidUrl
+    ? product.fotoProduk
+    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80";
+
   return (
     <div className="flex gap-4 bg-white border border-black/10 rounded-sm p-3 hover:border-black/30 transition">
       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black/5 rounded-sm overflow-hidden shrink-0">
         <img
-          src={product.fotoProduk}
+          src={displayImage}
           alt={product.namaProduk}
           className="w-full h-full object-cover"
         />
@@ -119,29 +238,116 @@ function ProductRow({ product }: { product: Produk }) {
               className={`shrink-0 text-[9px] font-semibold tracking-wide px-2 py-0.5 rounded-full ${
                 product.statusProduk === "Aktif"
                   ? "bg-black text-white"
-                  : "bg-black/5 text-black/40"
+                  : "bg-black/10 text-black/50"
               }`}
             >
               {product.statusProduk.toUpperCase()}
             </span>
           </div>
           <p className="text-sm text-black/60 mt-0.5">{formatRupiah(product.harga)}</p>
-         <p className={`${mono.className} text-[10px] text-black/35 mt-1`}>
+          <p className={`${mono.className} text-[10px] text-black/35 mt-1`}>
             STOCK {String(product.stok).padStart(2, "0")}
           </p>
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={onViewDetail}
+            className="flex items-center justify-center gap-1 flex-1 text-xs font-medium border border-black/15 rounded-sm py-2 hover:border-black hover:bg-black/[0.02] transition text-black"
+          >
+            <Eye className="w-3.5 h-3.5" /> DETAIL
+          </button>
+
           <Link
             href={`/edit-produk/${product.id}`}
-            className="flex-1 text-center text-xs font-medium border border-black/15 rounded-sm py-2 hover:border-black hover:bg-black/[0.02] transition"
+            className="flex-1 text-center text-xs font-medium border border-black/15 rounded-sm py-2 hover:border-black hover:bg-black/[0.02] transition text-black"
           >
             EDIT
           </Link>
-          <button className="flex-1 text-xs font-medium border border-black/15 rounded-sm py-2 hover:border-black hover:bg-black/[0.02] transition">
+
+          <button
+            onClick={() => onToggleStatus(product.id)}
+            className="flex-1 text-xs font-medium border border-black/15 rounded-sm py-2 hover:border-black hover:bg-black/[0.02] transition text-black"
+          >
             {product.statusProduk === "Aktif" ? "NONAKTIFKAN" : "AKTIFKAN"}
           </button>
+
+          <button
+            onClick={() => onDelete(product.id)}
+            className="p-2 border border-red-200 text-red-600 rounded-sm hover:bg-red-50 hover:border-red-400 transition"
+            title="Hapus Produk"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Komponen Modal Detail Produk
+function ProductDetailModal({ product, onClose }: { product: Produk; onClose: () => void }) {
+  const isValidUrl =
+    product.fotoProduk &&
+    (product.fotoProduk.startsWith("http://") ||
+      product.fotoProduk.startsWith("https://") ||
+      product.fotoProduk.startsWith("data:image"));
+
+  const displayImage = isValidUrl
+    ? product.fotoProduk
+    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-lg rounded-sm overflow-hidden flex flex-col max-h-[90vh]">
+        
+        {/* Header Modal */}
+        <div className="flex items-center justify-between p-4 border-b border-black/10">
+          <h2 className={`${playfair.className} text-lg font-bold text-black`}>Detail Produk</h2>
+          <button onClick={onClose} className="text-black/50 hover:text-black transition p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Isi Body Modal (Bisa di-scroll) */}
+        <div className="p-5 overflow-y-auto">
+          <div className="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden mb-5 border border-black/10">
+            <img src={displayImage} alt={product.namaProduk} className="w-full h-full object-cover" />
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest text-black/40 uppercase mb-1">Nama Produk</p>
+              <p className="text-sm font-medium text-black">{product.namaProduk}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] font-semibold tracking-widest text-black/40 uppercase mb-1">Harga</p>
+                <p className="text-sm font-medium text-black">{formatRupiah(product.harga)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold tracking-widest text-black/40 uppercase mb-1">Stok & Dimensi</p>
+                <p className="text-sm font-medium text-black">{product.stok} Pcs • {product.ukuranDimensi || "-"}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest text-black/40 uppercase mb-1">Deskripsi</p>
+              <p className="text-sm text-black/70 leading-relaxed whitespace-pre-wrap">
+                {product.deskripsi || "Tidak ada deskripsi."}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest text-black/40 uppercase mb-1">Kondisi Defect</p>
+              <p className="text-sm font-medium text-black">
+                {product.defect ? "Ada Defect (Tandai)" : "Mulus / Tanpa Defect"}
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -39,6 +39,16 @@ const emptySlide = (): Slide => ({
   jumlahStok: "",
 });
 
+// Helper untuk mengubah file gambar jadi Base64 String
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export default function TambahProduk() {
   const [slides, setSlides] = useState<Slide[]>([emptySlide()]);
 
@@ -78,75 +88,67 @@ export default function TambahProduk() {
 
   const handlePublish = async () => {
     try {
-      // SEMENTARA UNTUK TESTING
-      // Nanti diganti dengan tokoId dari seller yang sedang login.
-      const TOKO_ID = 1;
+      const token = localStorage.getItem("token");
+
+      const TOKO_ID = Number(localStorage.getItem("tokoId"));
+
+      if (!token || !TOKO_ID) {
+        alert("Sesi Anda telah berakhir. Silahkan login kembali.");
+        return;
+      }
 
       for (const slide of slides) {
+        if (!slide.judulProduk || !slide.harga) {
+          alert("Harap isi judul Produk dan harga terlebih dahulu brayy.");
+          return;
+        }
+
+        let base64Foto = "";
+        if (slide.fotoProduk) {
+          base64Foto = await fileToBase64(slide.fotoProduk);
+        }
+
         const payload = {
           tokoId: TOKO_ID,
           namaProduk: slide.judulProduk,
           deskripsi: slide.deskripsi,
           harga: Number(slide.harga) || 0,
           stok: Number(slide.jumlahStok) || 0,
-          ukuranDimensi:
-            slide.ukuranTiapStok || slide.dimensiProduk,
-          fotoProduk: slide.fotoProduk
-            ? slide.fotoProduk.name
-            : "",
+          ukuranDimensi: slide.ukuranTiapStok || slide.dimensiProduk,
+          fotoProduk: base64Foto,
+          catatanKondisi: slide.catatanKondisi,
+          defectTerpilih: slide.defectTerpilih,
           defect: slide.defectTerpilih.length > 0,
         };
-
         console.log("Mengirim produk:", payload);
 
-       const response = await fetch(
-  "http://localhost:3001/produk",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  }
-);
+        const response = await fetch("http://localhost:3001/produk", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
         if (!response.ok) {
           const errorText = await response.text();
-
-          console.error(
-            "Response backend:",
-            errorText
-          );
-
-          throw new Error(
-            `Gagal menambahkan produk: ${response.status}`
-          );
+          console.error("Response backend error:", errorText);
+          throw new Error(`Gagal menambahkan produk: ${response.status}`);
         }
 
         const result = await response.json();
-
-        console.log(
-          "Produk berhasil masuk backend:",
-          result
-        );
+        console.log("Produk berhasil masuk backend:", result);
       }
-
-      alert(
-        `${slides.length} produk berhasil dipublish!`
-      );
-
+      alert(`${slides.length} produk berhasil dipublish!`);
       setSlides([emptySlide()]);
     } catch (error) {
-      console.error(
-        "Gagal publish produk:",
-        error
-      );
-
+      console.error("Gagal publish produk:", error);
       alert(
         "Produk gagal dipublish. Pastikan backend NestJS sedang berjalan dan cek Console."
       );
     }
-  };
+  }; // sampe cini yaa
 
   return (
     <div

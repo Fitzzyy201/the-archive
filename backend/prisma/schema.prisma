@@ -107,7 +107,7 @@ model Produk {
   harga         Int
   stok          Int
   ukuranDimensi String       @map("ukuran_dimensi") @db.VarChar(50)
-  fotoProduk    String       @map("foto_produk") @db.VarChar(255)
+  fotoProduk    String       @map("foto_produk") @db.LongText
   defect        Boolean      @default(false)
   statusProduk  StatusProduk @default(Aktif) @map("status_produk")
 

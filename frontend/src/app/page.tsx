@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,6 +13,8 @@ import {
   User,
   PackageOpen,
   Clock,
+  CheckCircle2,
+  Store,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
@@ -40,26 +43,69 @@ const NAV_ITEMS = [
 ];
 
 export default function Beranda() {
-  const [role, setRole] = useState<string | null>(null);
+  const router = useRouter();
   const [isSellerPending, setIsSellerPending] = useState(false);
+  const [isSellerApproved, setIsSellerApproved] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setIsMounted(true);
-      
-      const userRole = localStorage.getItem("role");
-      const agreedRules = localStorage.getItem("agreedToSellerRules");
+    queueMicrotask(async () => {
+      const userRole =localStorage.getItem("userRole");
 
-      if (userRole) {
-        setRole(userRole);
+      if (userRole === "Seller") {
+        router.push("/beranda-seller");
+        return;
       }
 
-      if (agreedRules === "true") {
-        setIsSellerPending(true);
+      setIsMounted(true);
+
+      const agreed = localStorage.getItem("agreedToSellerRules") === "true";
+      const token = localStorage.getItem("token");
+
+      if (agreed) {
+        if (!token) {
+          setIsSellerPending(true);
+          return;
+        }
+
+        try {
+          const res = await fetch(`http://localhost:3001/toko/status-my-shop`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+
+            if (data.statusVerif === "Approved") {
+              localStorage.removeItem("agreedToSellerRules");
+              setIsSellerApproved(true);
+              setIsSellerPending(false);
+
+              localStorage.setItem("tokoId", data.id);
+
+            } else if (data.statusVerif === "Pending") {
+              setIsSellerPending(true);
+            }
+          } else {
+            setIsSellerPending(true);
+          }
+        } catch (err) {
+          console.error("Gagal cek status toko:", err);
+          setIsSellerPending(true);
+        }
+      } else {
+        setIsSellerPending(false);
       }
     });
-  }, []);
+  }, [router]);
+
+  const handleMasukDashboard = () => {
+    localStorage.removeItem("agreedToSellerRules");
+    localStorage.setItem("userRole", "Seller");
+    router.push("/beranda-seller");
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
@@ -73,7 +119,32 @@ export default function Beranda() {
       {/* Main content */}
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
         
-        {/* BANNER INFORMASI STATUS UNTUK CALON SELLER (Hanya muncul jika sudah isMounted) */}
+        {isMounted && isSellerApproved && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-black/20 p-6 sm:p-8 rounded-md max-w-md w-full shadow-2xl text-center animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-emerald-100 border border-emerald-200 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-black mb-2">
+              Selamat! Toko Anda Disetujui
+            </h3>
+            
+            <p className="text-xs sm:text-sm text-black/60 mb-6 leading-relaxed">
+              Pengajuan toko Anda telah diverifikasi oleh Admin. Sekarang akun Anda resmi beralih menjadi akun Seller dan siap untuk mengunggah katalog produk.
+            </p>
+
+            <button
+              onClick={handleMasukDashboard}
+              className="w-full flex items-center justify-center gap-2 bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition"
+            >
+              <Store className="w-4 h-4" /> Masuk ke Dashboard Seller
+            </button>
+          </div>
+        </div>
+      )}
+        
+        {/* BANNER INFORMASI STATUS UNTUK CALON SELLER */}
         {isMounted && isSellerPending && (
           <div className="m-5 sm:mx-10 sm:mt-6 bg-amber-50 border border-amber-200 p-4 rounded-md flex items-start gap-3 text-amber-900 shadow-sm">
             <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -148,7 +219,7 @@ export default function Beranda() {
           {produkList.length === 0 ? (
             <EmptyState />
           ) : (
-             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
               {produkList.map((produk) => (
                 <ProdukCard key={produk.id} produk={produk} />
               ))}

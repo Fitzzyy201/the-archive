@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { StatusVerif } from '@prisma/client';
+import { StatusVerif, Role } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -23,15 +23,33 @@ export class AdminService {
     });
   }
 
-  async verifySeller(userId: string, status: 'APPROVED' | 'REJECTED') {
-    return await this.prisma.tokoSeller.update({
-      where: {
-        id: Number(userId),
-      },
+  async verifySeller(tokoId: string, status: 'APPROVED' | 'REJECTED') {
+    const idToko = Number(tokoId);
+
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { id: idToko },
+    });
+
+    if (!toko) {
+      throw new NotFoundException('Data toko tidak ditemukan');
+    }
+
+    const isApproved = status === 'APPROVED';
+
+    const updatedToko = await this.prisma.tokoSeller.update({
+      where: { id: idToko },
       data: {
-        statusVerif:
-          status === 'APPROVED' ? StatusVerif.Approved : StatusVerif.Rejected,
+        statusVerif: isApproved ? StatusVerif.Approved : StatusVerif.Rejected,
       },
     });
+
+    if (isApproved) {
+      await this.prisma.user.update({
+        where: { id: toko.userId },
+        data: { role: Role.Seller },
+      });
+    }
+
+    return updatedToko;
   }
 }

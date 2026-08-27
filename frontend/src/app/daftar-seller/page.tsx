@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Home, Package, ShoppingBag, User, Upload } from "lucide-react";
+import { ArrowLeft, Home, Package, ShoppingBag, User, Upload, } from "lucide-react";
 import { Playfair_Display, Inter } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
