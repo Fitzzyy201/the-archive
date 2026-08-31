@@ -6,7 +6,10 @@ import { json, urlencoded } from 'express'; // Wajib import ini
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    Credential: true,
+  });
 
   // Bypass limit 100kb bawaan NestJS jadi 50mb
   app.use(json({ limit: '50mb' }));

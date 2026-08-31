@@ -81,18 +81,19 @@ model TokoSeller {
   userId          Int         @unique @map("id_user")
   diperiksaOleh   Int?        @map("diperiksa_oleh")
   namaToko        String      @map("nama_toko") @db.VarChar(100)
+  fotoToko        String?     @map("foto_toko") @db.LongText
   kota            String      @db.VarChar(100)
-  noTelp          String?      @map("no_telp") @db.VarChar(20)
+  noTelp          String?     @map("no_telp") @db.VarChar(20)
   noRekening      String      @map("no_rekening") @db.VarChar(50)
-  fotoKtp         String?      @map("foto_ktp") @db.VarChar(255)
-  fotoSkck        String?      @map("foto_skck") @db.VarChar(255)
+  fotoKtp         String?     @map("foto_ktp") @db.LongText
+  fotoSkck        String?     @map("foto_skck") @db.LongText
   statusVerif     StatusVerif @default(Pending) @map("status_verif")
   alasanPenolakan String?     @map("alasan_penolakan") @db.Text
   saldoToko       Int         @default(0) @map("saldo_toko")
 
   // Relasi
-  user      User        @relation("PemilikToko", fields: [userId], references: [id])
-  admin     User?       @relation("AdminPemeriksa", fields: [diperiksaOleh], references: [id])
+  user      User      @relation("PemilikToko", fields: [userId], references: [id])
+  admin     User?     @relation("AdminPemeriksa", fields: [diperiksaOleh], references: [id])
   produk    Produk[]
   transaksi Transaksi[]
 

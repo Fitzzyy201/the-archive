@@ -110,4 +110,86 @@ export class TokoService {
       namaToko: toko.namaToko,
     };
   }
+
+  async getTokoDetail(tokoId: number) {
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { id: tokoId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            fotoProfil: true,
+          },
+        },
+      },
+    });
+
+    if (!toko) {
+      throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    // Mengambil fotoToko secara aman menggunakan indeks string agar lolos ESLint & TS
+    const fotoTokoVal = (toko as Record<string, unknown>)['fotoToko'] as
+      string | undefined;
+
+    return {
+      id: toko.id,
+      namaToko: toko.namaToko,
+      noToko: toko.noTelp || '',
+      kota: toko.kota,
+      email: toko.user?.email || '',
+      fotoToko: fotoTokoVal || toko.user?.fotoProfil || '',
+    };
+  }
+
+  async updateTokoDetail(
+    tokoId: number,
+    data: {
+      namaToko?: string;
+      noToko?: string;
+      kota?: string;
+      email?: string;
+      fotoToko?: string;
+    },
+  ) {
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { id: tokoId },
+    });
+
+    if (!toko) {
+      throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      const updateData: {
+        namaToko?: string;
+        noTelp?: string;
+        kota?: string;
+        [key: string]: unknown;
+      } = {
+        namaToko: data.namaToko,
+        noTelp: data.noToko,
+        kota: data.kota,
+      };
+
+      if (data.fotoToko) {
+        updateData['fotoToko'] = data.fotoToko;
+      }
+
+      const updatedToko = await tx.tokoSeller.update({
+        where: { id: tokoId },
+        data: updateData,
+      });
+
+      // 2. Update Email di User jika ada perubahan
+      if (data.email) {
+        await tx.user.update({
+          where: { id: toko.userId },
+          data: { email: data.email },
+        });
+      }
+
+      return updatedToko;
+    });
+  }
 }

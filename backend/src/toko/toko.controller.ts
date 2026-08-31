@@ -53,4 +53,24 @@ export class TokoController {
       return { statusVerif: null };
     }
   }
+
+  @Get(':id')
+  async getTokoDetail(@Param('id') id: string) {
+    return this.tokoService.getTokoDetail(+id);
+  }
+
+  @Patch(':id')
+  async updateTokoDetail(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      namaToko?: string;
+      noToko?: string;
+      kota?: string;
+      email?: string;
+      fotoToko?: string;
+    },
+  ) {
+    return this.tokoService.updateTokoDetail(+id, body);
+  }
 }
