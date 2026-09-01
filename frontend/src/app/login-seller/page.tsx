@@ -17,41 +17,50 @@ export default function LoginSeller() {
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch("http://localhost:3001/auth/login",{
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  e.preventDefault();
+  setIsLoading(true);
+  
+  try {
+    const response = await fetch("http://localhost:3001/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role);
+    // 🔍 Print response asli di console F12 buat cek nama propertinya
+    console.log("Response Login Backend:", data);
 
-        if (data.id) localStorage.setItem("userId", data.id);
+    if (response.ok) {
+  // 1. Simpan JWT Token yang dikirim backend via access_token
+  const tokenVal = data.access_token || data.token;
+  if (tokenVal) localStorage.setItem("token", tokenVal);
 
-        alert("Login Seller Berhasil Cuyyy!!");
+  // 2. Simpan User ID & Role
+  if (data.id) localStorage.setItem("userId", String(data.id));
+  if (data.role) localStorage.setItem("role", data.role);
 
-        router.push("/beranda");
-      } else {
-        alert(`Gagal Login: ${data.message || "Email atau password salah"}`);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Gagal terhubung ke server backend!");
-    } finally {
-      setIsLoading(false);
+  // 3. Simpan Toko ID jika ada di dalam object user/toko
+  const tokoIdVal = data.tokoId || data.toko?.id || data.user?.tokoId || data.user?.toko?.id;
+  if (tokoIdVal) {
+    localStorage.setItem("tokoId", String(tokoIdVal));
+  }
+
+  alert("Login Seller Berhasil!");
+  router.push("/beranda-seller");
+}else {
+      alert(`Gagal Login: ${data.message || "Email atau password salah"}`);
     }
-    
-
-  };
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Gagal terhubung ke server backend!");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
@@ -67,9 +76,9 @@ export default function LoginSeller() {
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
-          <button className="absolute left-4 sm:left-8">
+          <Link href="/" className="absolute left-4 sm:left-8">
             <ArrowLeft className="w-5 h-5" />
-          </button>
+          </Link>
           <h1 className={`${playfair.className} text-2xl sm:text-3xl font-bold mb-1 tracking-tight text-black`}>
             MASUK SELLER
           </h1>
@@ -119,9 +128,10 @@ export default function LoginSeller() {
 
               <button
                 type="submit"
-                className="w-full bg-black text-white rounded-md py-3.5 flex items-center justify-center gap-2 font-medium mt-4 hover:bg-gray-900 transition"
+                disabled={isLoading}
+                className="w-full bg-black text-white rounded-md py-3.5 flex items-center justify-center gap-2 font-medium mt-4 hover:bg-gray-900 transition disabled:opacity-50"
               >
-                LOGIN <ArrowRight className="w-4 h-4" />
+                {isLoading ? "LOADING..." : <>LOGIN <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
 

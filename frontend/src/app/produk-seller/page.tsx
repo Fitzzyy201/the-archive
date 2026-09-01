@@ -114,7 +114,7 @@ export default function ProdukSeller() {
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
         <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/profile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
+        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
       {/* Content */}

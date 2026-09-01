@@ -3,19 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Home, Bell, User } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 const inter = Inter({ subsets: ["latin"] });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 export default function LoginBuyer() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:3001/auth/login", {
@@ -26,118 +33,124 @@ export default function LoginBuyer() {
         body: JSON.stringify({
           email: email,
           password: password,
-      }),
-    });
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      if (response.ok) {
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        if (data.role) localStorage.setItem("role", data.role);
 
-      alert("Login Berhasil!!!");
-
-      router.push("/");
-
-    } else {
-      alert(`Gagal Login: ${data.message}`);
+        alert("Login Berhasil!");
+        router.push("/");
+      } else {
+        alert(`Gagal Login: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Gagal terhubung ke server backend! Pastikan backend sudah jalan.");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Gagal terhubung ke server backend! Pastikan backend sudah jalan");
-  }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem icon={<Bell className="w-5 h-5" />} label="NOTIFICATION" />
-        <NavItem icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black">
+      {/* Top Navbar */}
+      <Navbar />
 
-   
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
-        <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
-          <button className="absolute left-4 sm:left-8">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className={`${playfair.className} text-2xl sm:text-3xl font-bold tracking-tight text-black`}>
-            MASUK
-          </h1>
-        </div>
-
-        <div className="flex-1 w-full px-6 sm:px-12 md:px-16 pt-8 pb-6 md:flex md:items-center md:justify-center">
-          <div className="w-full md:max-w-md lg:max-w-lg mx-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold mb-2 text-black">Welcome Back</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Enter your credentials to access your account.
-              </p>
-            </div>
-
-        
-            <div className="border border-gray-300 rounded-md p-5 sm:p-6">
-              <form className="space-y-5" onSubmit={handleLogin}>
-                <div>
-                  <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
-                    EMAIL
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@email.com"
-                    className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
-                    PASSWORD
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div className="text-right">
-                  <Link href="/lupa-password" className="text-xs font-medium tracking-wide text-black">
-                    FORGOT PASSWORD?
-                  </Link>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-black text-white rounded-md py-3.5 flex items-center justify-center gap-2 font-medium hover:bg-gray-900 transition"
-                >
-                  LOGIN <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-            </div>
-
-            <p className="text-center text-sm text-gray-700 mt-6">
-              Belum punya akun?{" "}
-              <Link href="/daftar-buyer" className="font-semibold text-black">
-                Daftar di sini
-              </Link>
+      <main
+        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+      >
+        <div className="w-full max-w-md mx-auto">
+          {/* Header Card */}
+          <div className="text-center mb-8">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
+            >
+              <ArrowLeft className="w-4 h-4" /> KEMBALI
+            </button>
+            <h1
+              className={`${playfair.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
+            >
+              Welcome Back
+            </h1>
+            <p className="text-black/50 text-xs sm:text-sm leading-relaxed">
+              Masukkan kredensial akun Anda untuk mengakses katalog arsip.
             </p>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function NavItem({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="flex flex-col md:flex-row items-center gap-1 md:gap-3 text-white cursor-pointer hover:opacity-80 transition md:px-6 md:py-3 md:rounded-md">
-      {icon}
-      <span className="text-[10px] md:text-sm font-medium">{label}</span>
+          {/* Form Card */}
+          <div className="bg-white border border-black/10 rounded-sm p-6 sm:p-8 shadow-sm">
+            <form className="space-y-5" onSubmit={handleLogin}>
+              <div>
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
+                  EMAIL
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@email.com"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
+                  PASSWORD
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
+                />
+              </div>
+
+              <div className="text-right">
+                <Link
+                  href="/lupa-password"
+                  className={`${mono.className} text-[10px] tracking-wider text-black/60 hover:text-black transition`}
+                >
+                  LUPA PASSWORD?
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`${mono.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                {isLoading ? "MASUK..." : "MASUK KE AKUN"}{" "}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+
+          <p className="text-center text-xs text-black/60 mt-6 font-sans">
+            Belum memiliki akun?{" "}
+            <Link
+              href="/daftar-buyer"
+              className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
+            >
+              Daftar di sini
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

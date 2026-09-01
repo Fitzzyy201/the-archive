@@ -3,11 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Home, Bell, User } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 const inter = Inter({ subsets: ["latin"] });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+
 const DAFTAR_KOTA = [
   "Bandung",
   "Bandung Barat",
@@ -39,7 +45,6 @@ const DAFTAR_KOTA = [
   "Yogyakarta",
 ];
 
-
 export default function DaftarBuyer() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,15 +54,17 @@ export default function DaftarBuyer() {
   const [alamat, setAlamat] = useState("");
   const [catatan, setCatatan] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const kotaTersaring = DAFTAR_KOTA.filter((item) =>
-  item.toLowerCase().includes(kota.toLocaleLowerCase())
+    item.toLowerCase().includes(kota.toLocaleLowerCase())
   );
 
   const router = useRouter();
 
   const handleDaftar = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:3001/auth/register", {
@@ -83,35 +90,45 @@ export default function DaftarBuyer() {
     } catch (error) {
       console.error("Error:", error);
       alert("Gagal terhubung ke server backend! Pastikan backend sudah jalan.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
-      {/* Sidebar (desktop) / Bottom Nav (mobile) */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem icon={<Bell className="w-5 h-5" />} label="NOTIFICATION" />
-        <NavItem icon={<User className="w-5 h-5" />} label="PROFILE" active />
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black">
+      {/* Top Navbar */}
+      <Navbar />
 
-      {/* Main content */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
-        {/* Header */}
-        <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
-          <button className="absolute left-4 sm:left-8" onClick={() => router.back()}>
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className={`${playfair.className} text-2xl sm:text-3xl font-bold tracking-tight text-black`}>
-            DAFTAR
-          </h1>
-        </div>
+      <main
+        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+      >
+        <div className="w-full max-w-md lg:max-w-lg mx-auto">
+          {/* Header Card */}
+          <div className="text-center mb-8">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
+            >
+              <ArrowLeft className="w-4 h-4" /> KEMBALI
+            </button>
+            <h1
+              className={`${playfair.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
+            >
+              Join The Archive
+            </h1>
+            <p className="text-black/50 text-xs sm:text-sm leading-relaxed">
+              Daftarkan diri Anda untuk menjelajahi dan mengoleksi pakaian arsip terkurasi.
+            </p>
+          </div>
 
-        <div className="flex-1 w-full px-6 sm:px-12 md:px-16 pt-8 pb-4 md:flex md:items-center md:justify-center">
-          <div className="w-full md:max-w-md lg:max-w-lg mx-auto">
+          {/* Form Card */}
+          <div className="bg-white border border-black/10 rounded-sm p-6 sm:p-8 shadow-sm">
             <form className="space-y-5" onSubmit={handleDaftar}>
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   EMAIL
                 </label>
                 <input
@@ -120,12 +137,14 @@ export default function DaftarBuyer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@email.com"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   PASSWORD
                 </label>
                 <input
@@ -134,12 +153,14 @@ export default function DaftarBuyer() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   NAMA LENGKAP
                 </label>
                 <input
@@ -147,12 +168,14 @@ export default function DaftarBuyer() {
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
                   placeholder="Masukkan nama lengkap"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   NOMOR TELEPON
                 </label>
                 <input
@@ -161,12 +184,14 @@ export default function DaftarBuyer() {
                   value={telepon}
                   onChange={(e) => setTelepon(e.target.value)}
                   placeholder="081234567890"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div className="relative">
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   KOTA
                 </label>
                 <input
@@ -177,93 +202,85 @@ export default function DaftarBuyer() {
                     setKota(e.target.value);
                     setIsDropdownOpen(true);
                   }}
-                  placeholder="Ketik nama kota (misal: Bekasi, Bandung)"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  placeholder="Ketik nama kota (misal: Bandung, Jakarta Selatan)"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
 
                 {/* Dropdown Floating Suggestions */}
-                {isDropdownOpen && kota.length > 0 && kotaTersaring.length > 0 && (
-                  <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-44 overflow-y-auto mt-1 left-0">
-                    {kotaTersaring.map((item) => (
-                      <li
-                        key={item}
-                        onClick={() => {
-                          setKota(item);
-                          setIsDropdownOpen(false);
-                        }}
-                        className="px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer transition-colors"
-                      >
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                {isDropdownOpen &&
+                  kota.length > 0 &&
+                  kotaTersaring.length > 0 && (
+                    <ul className="absolute z-20 w-full bg-white border border-black/10 rounded-sm shadow-xl max-h-48 overflow-y-auto mt-1 left-0 divide-y divide-black/5">
+                      {kotaTersaring.map((item) => (
+                        <li
+                          key={item}
+                          onClick={() => {
+                            setKota(item);
+                            setIsDropdownOpen(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-black/80 hover:bg-[#FAF9F6] hover:text-black cursor-pointer transition font-sans"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
                   ALAMAT LENGKAP
                 </label>
                 <input
                   type="text"
                   value={alamat}
                   onChange={(e) => setAlamat(e.target.value)}
-                  placeholder="Nama jalan, gedung, nomor rumah"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
-                  CATATAN (OPTIONAL)
+                <label
+                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                >
+                  CATATAN PENGIRIMAN (OPSIONAL)
                 </label>
                 <input
                   type="text"
                   value={catatan}
                   onChange={(e) => setCatatan(e.target.value)}
-                  placeholder="Contoh: Warna pagar, patokan"
-                  className="w-full border-b border-gray-300 px-1 py-2 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-black"
+                  placeholder="Contoh: Titip di pos satpam / Rumah pagar hitam"
+                  className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-black text-white rounded-md py-3.5 flex items-center justify-center font-medium mt-6 hover:bg-gray-900 transition"
+                disabled={isLoading}
+                className={`${mono.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition mt-6 ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                DAFTAR
+                {isLoading ? "MENDAFTARKAN..." : "BUAT AKUN BARU"}{" "}
+                <ArrowRight className="w-4 h-4" />
               </button>
             </form>
-
-            <p className="text-center text-sm text-gray-700 mt-6">
-              Sudah punya akun?{" "}
-              <Link href="/login-buyer" className="text-black font-bold">
-                Login di sini
-              </Link>
-            </p>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function NavItem({
-  icon,
-  label,
-  active = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <div
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer hover:opacity-80 transition md:px-6 md:py-3 md:rounded-md ${
-        active ? "text-white" : "text-gray-400"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm font-medium">{label}</span>
+          <p className="text-center text-xs text-black/60 mt-6 font-sans">
+            Sudah memiliki akun?{" "}
+            <Link
+              href="/login-buyer"
+              className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
+            >
+              Masuk di sini
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

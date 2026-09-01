@@ -3,64 +3,75 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
-  Search,
-  MessageCircle,
-  ShoppingBag,
-  Home,
-  Bell,
-  User,
   PackageOpen,
   Clock,
   CheckCircle2,
   Store,
+  Sparkles,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-type Produk = {
-  id: string;
-  nama: string;
+type BackendProduk = {
+  id: number;
+  namaProduk: string;
   harga: number;
-  size: string;
-  toko: string;
-  kota: string;
   stok: number;
-  kondisi: string;
-  foto: string;
+  ukuranDimensi?: string;
+  fotoProduk?: string;
+  defect?: boolean;
+  toko?: {
+    namaToko: string;
+    kota: string;
+  };
 };
-
-const produkList: Produk[] = [];
-
-const NAV_ITEMS = [
-  { href: "/", icon: Home, label: "BERANDA" },
-  { href: "/notifikasi", icon: Bell, label: "NOTIFICATION" },
-  { href: "/profile", icon: User, label: "PROFILE" },
-];
 
 export default function Beranda() {
   const router = useRouter();
   const [isSellerPending, setIsSellerPending] = useState(false);
   const [isSellerApproved, setIsSellerApproved] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [products, setProducts] = useState<BackendProduk[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    queueMicrotask(async () => {
-      const userRole =localStorage.getItem("userRole");
+    const loadPageData = async () => {
+      const token = localStorage.getItem("token");
+      const role =
+        localStorage.getItem("role") || localStorage.getItem("userRole");
 
-      if (userRole === "Seller") {
+      // 1. Wajib ada TOKEN dan ROLE === "Seller" baru me-redirect ke seller
+      if (token && role === "Seller") {
         router.push("/beranda-seller");
         return;
       }
 
       setIsMounted(true);
 
+      // 2. Fetch published products dari backend
+      try {
+        const res = await fetch("http://localhost:3001/produk");
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil katalog produk:", err);
+      } finally {
+        setIsLoading(false);
+      }
+
+      // 3. Cek status toko calon seller
       const agreed = localStorage.getItem("agreedToSellerRules") === "true";
-      const token = localStorage.getItem("token");
 
       if (agreed) {
         if (!token) {
@@ -82,9 +93,7 @@ export default function Beranda() {
               localStorage.removeItem("agreedToSellerRules");
               setIsSellerApproved(true);
               setIsSellerPending(false);
-
               localStorage.setItem("tokoId", data.id);
-
             } else if (data.statusVerif === "Pending") {
               setIsSellerPending(true);
             }
@@ -98,7 +107,9 @@ export default function Beranda() {
       } else {
         setIsSellerPending(false);
       }
-    });
+    };
+
+    loadPageData();
   }, [router]);
 
   const handleMasukDashboard = () => {
@@ -107,29 +118,34 @@ export default function Beranda() {
     router.push("/beranda-seller");
   };
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-      {/* Sidebar (desktop) / Bottom Nav (mobile) */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        {NAV_ITEMS.map((item) => (
-          <NavItem key={item.href} href={item.href} icon={<item.icon className="w-5 h-5" />} label={item.label} />
-        ))}
-      </div>
+  // Filter products by search query
+  const filteredProducts = products.filter((p) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      p.namaProduk?.toLowerCase().includes(q) ||
+      p.toko?.namaToko?.toLowerCase().includes(q) ||
+      p.toko?.kota?.toLowerCase().includes(q)
+    );
+  });
 
-      {/* Main content */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
-        
-        {isMounted && isSellerApproved && (
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black selection:bg-black selection:text-white">
+      {/* TOP DESKTOP HORIZONTAL NAVBAR + MOBILE HEADER & BOTTOM NAV */}
+      <Navbar onSearch={(query) => setSearchQuery(query)} />
+
+      {/* MODAL NOTIFIKASI TOKO APPROVED */}
+      {isMounted && isSellerApproved && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-black/20 p-6 sm:p-8 rounded-md max-w-md w-full shadow-2xl text-center animate-in fade-in zoom-in duration-200">
             <div className="w-16 h-16 bg-emerald-100 border border-emerald-200 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            
+
             <h3 className="text-xl font-bold text-black mb-2">
               Selamat! Toko Anda Disetujui
             </h3>
-            
+
             <p className="text-xs sm:text-sm text-black/60 mb-6 leading-relaxed">
               Pengajuan toko Anda telah diverifikasi oleh Admin. Sekarang akun Anda resmi beralih menjadi akun Seller dan siap untuk mengunggah katalog produk.
             </p>
@@ -143,175 +159,143 @@ export default function Beranda() {
           </div>
         </div>
       )}
-        
-        {/* BANNER INFORMASI STATUS UNTUK CALON SELLER */}
-        {isMounted && isSellerPending && (
-          <div className="m-5 sm:mx-10 sm:mt-6 bg-amber-50 border border-amber-200 p-4 rounded-md flex items-start gap-3 text-amber-900 shadow-sm">
+
+      {/* BANNER INFORMASI STATUS UNTUK CALON SELLER */}
+      {isMounted && isSellerPending && (
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 mt-4">
+          <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-sm flex items-start gap-3 text-amber-900 shadow-sm">
             <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-xs sm:text-sm">
               <p className="font-semibold text-amber-950">
                 Pengajuan Toko Anda Sedang Dalam Peninjauan Admin (PENDING)
               </p>
-              <p className="text-amber-800/80 mt-0.5">
-                Akun Anda telah terdaftar dan sedang diverifikasi oleh staf kami. Selama masa peninjauan, Anda tetap dapat menjelajah produk sebagai pembeli. Fitur jualan akan aktif secara otomatis setelah di-approve oleh Admin.
+              <p className="text-amber-800/80 mt-0.5 leading-relaxed">
+                Akun Anda telah terdaftar dan sedang diverifikasi oleh tim kurasi kami. Selama masa peninjauan, Anda tetap dapat menjelajah produk sebagai pembeli.
               </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Header */}
-        <div className="px-5 sm:px-10 py-6 bg-white border-b border-black/10">
-          <p className={`${mono.className} text-[10px] tracking-[0.25em] text-black/40 mb-4`}>
-            THE ARCHIVE
+      {/* MAIN CONTENT AREA */}
+      <main className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 md:px-12 py-10 md:py-14 pb-28 md:pb-16`}>
+        
+        {/* HERO EDITORIAL SECTION */}
+        <div className="text-center mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 border border-black/10 rounded-full text-[9px] tracking-[0.25em] text-black/50 uppercase mb-3 bg-white/60 font-mono">
+            <Sparkles className="w-3 h-3 text-black/60" /> ARCHIVAL CURATION
+          </div>
+          <h2
+            className={`${playfair.className} text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-black`}
+          >
+            The Archive
+          </h2>
+          <p className={`${mono.className} text-[11px] sm:text-xs text-black/50 tracking-[0.2em] uppercase mt-3`}>
+            DISCOVER TIMELESS & AUTHENTIC VINTAGE GARMENTS
           </p>
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-2 border border-black/15 rounded-sm px-4 py-2.5 bg-white">
-              <Search className="w-4 h-4 text-black/30 shrink-0" />
-              <input
-                type="text"
-                placeholder="Search Catalogue"
-                className={`${mono.className} flex-1 min-w-0 text-[11px] tracking-[0.1em] uppercase placeholder:text-black/30 outline-none bg-transparent text-black`}
-              />
-            </div>
-
-            <Link
-              href="/daftar-seller"
-              className={`${mono.className} hidden sm:inline-block text-[10px] font-medium tracking-[0.15em] border border-black/15 rounded-sm px-4 py-2.5 hover:bg-black hover:text-white transition whitespace-nowrap text-black`}
-            >
-              BUKA TOKO
-            </Link>
-
-            <Link
-              href="/login-buyer"
-              className={`${mono.className} text-[10px] font-medium tracking-[0.15em] bg-black text-white rounded-sm px-4 py-2.5 hover:bg-black/85 transition whitespace-nowrap`}
-            >
-              LOGIN
-            </Link>
-
-            <Link
-              href="/pesan"
-              className="hidden sm:flex items-center justify-center w-9 h-9 border border-black/15 rounded-sm hover:bg-black/[0.03] transition shrink-0"
-            >
-              <MessageCircle className="w-4 h-4 text-black/60" />
-            </Link>
-
-            <Link
-              href="/keranjang"
-              className="hidden sm:flex items-center justify-center w-9 h-9 border border-black/15 rounded-sm hover:bg-black/[0.03] transition shrink-0"
-            >
-              <ShoppingBag className="w-4 h-4 text-black/60" />
-            </Link>
-          </div>
+          <div className="w-16 h-[1px] bg-black/20 mx-auto mt-6" />
         </div>
 
-        {/* Body */}
-        <div className="flex-1 w-full px-5 sm:px-10 md:px-14 py-10">
-          <div className="text-center mb-10">
-            <p className={`${mono.className} text-[10px] tracking-[0.3em] text-black/40 mb-2`}>
-              CURATED SELECTION
-            </p>
-            <h1 className={`${playfair.className} text-4xl sm:text-5xl font-semibold tracking-tight text-black`}>
-              The Archive
-            </h1>
+        {/* CATALOGUE GRID / EMPTY STATE */}
+        {isLoading ? (
+          <div className="py-20 text-center text-xs text-black/40 animate-pulse font-mono tracking-widest uppercase">
+            Loading Archive Catalogue...
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {filteredProducts.map((produk) => (
+              <ProdukCard key={produk.id} produk={produk} />
+            ))}
+          </div>
+        )}
+      </main>
 
-          {produkList.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-              {produkList.map((produk) => (
-                <ProdukCard key={produk.id} produk={produk} />
-              ))}
-            </div>
-          )}
+      {/* FOOTER EDITORIAL (Vintage Aesthetic) */}
+      <footer className="w-full border-t border-black/10 bg-white py-8 px-6 sm:px-12 pb-24 md:pb-8 text-center">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] text-black/40 uppercase tracking-[0.15em] font-mono">
+          <span>THE ARCHIVE © 2024 · ALL RIGHTS RESERVED</span>
+          <span>CURATED THRIFT & ARCHIVE MARKETPLACE</span>
+          <span>INDONESIA</span>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-black/15 rounded-sm">
-      <PackageOpen className="w-8 h-8 text-black/20 mb-4" strokeWidth={1.5} />
-      <p className={`${playfair.className} text-lg text-black/70 mb-1`}>
-        Belum Ada Produk
+    <div className="flex flex-col items-center justify-center text-center py-20 px-6 border border-dashed border-black/15 rounded-sm bg-white/40">
+      <PackageOpen className="w-10 h-10 text-black/20 mb-4" strokeWidth={1.25} />
+      <p className={`${playfair.className} text-xl text-black/70 mb-1.5 font-semibold`}>
+        Belum Ada Produk yang Dipublikasikan
       </p>
-      <p className="text-xs text-black/40 max-w-xs px-4">
-        Belum ada toko yang publish produk. Coba cek lagi nanti ya.
+      <p className="text-xs text-black/40 max-w-sm px-4 leading-relaxed font-sans">
+        Saat ini katalog produk sedang dalam kurasi. Toko-toko terverifikasi akan segera memperbarui koleksi terbaru mereka.
       </p>
     </div>
   );
 }
 
-function ProdukCard({ produk }: { produk: Produk }) {
+function ProdukCard({ produk }: { produk: BackendProduk }) {
+  const isValidUrl =
+    produk.fotoProduk &&
+    (produk.fotoProduk.startsWith("http://") ||
+      produk.fotoProduk.startsWith("https://") ||
+      produk.fotoProduk.startsWith("data:image"));
+
+  const displayImage = isValidUrl
+    ? produk.fotoProduk
+    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80";
+
   return (
     <Link
       href={`/produk/${produk.id}`}
-      className="group bg-white border border-black/10 rounded-sm overflow-hidden hover:shadow-md transition"
+      className="group bg-white border border-black/10 rounded-sm overflow-hidden hover:border-black/30 hover:shadow-md transition-all duration-300 flex flex-col"
     >
       <div className="relative aspect-square bg-black/5 overflow-hidden">
-        {produk.foto ? (
-          <img
-            src={produk.foto}
-            alt={produk.nama}
-            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <PackageOpen className="w-6 h-6 text-black/15" strokeWidth={1.5} />
-          </div>
-        )}
+        <img
+          src={displayImage}
+          alt={produk.namaProduk}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
         <span
-          className={`${mono.className} absolute top-2 left-2 bg-black text-white text-[9px] tracking-[0.1em] px-2 py-1 rounded-sm`}
+          className={`${mono.className} absolute top-2.5 left-2.5 bg-black/90 text-white text-[9px] tracking-[0.1em] px-2 py-1 rounded-sm`}
         >
           STOCK: {produk.stok}
         </span>
+        {produk.defect && (
+          <span
+            className={`${mono.className} absolute top-2.5 right-2.5 bg-amber-600/90 text-white text-[8px] tracking-[0.1em] px-1.5 py-0.5 rounded-sm`}
+          >
+            DEFECT
+          </span>
+        )}
       </div>
 
-      <div className="p-3 sm:p-4">
-        <p className={`${playfair.className} text-sm font-semibold text-black leading-snug mb-1 line-clamp-1`}>
-          {produk.nama.toUpperCase()}
-        </p>
-        <p className={`${mono.className} text-[11px] text-black/60 mb-2`}>
-          IDR {produk.harga.toLocaleString("id-ID")}{" "}
-          <span className="text-black/30">· SIZE: {produk.size}</span>
-        </p>
-        <p className="text-[11px] text-black/50 mb-1">
-          {produk.toko} · <span className="italic">{produk.kota}</span>
-        </p>
-        <p className="text-[10px] text-red-500/80">
-          {produk.kondisi}
-        </p>
+      <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
+        <div>
+          <p
+            className={`${playfair.className} text-sm font-semibold text-black leading-snug mb-1 line-clamp-1 group-hover:text-black/80`}
+          >
+            {produk.namaProduk.toUpperCase()}
+          </p>
+          <p className={`${mono.className} text-[11px] text-black/70 mb-2 font-medium`}>
+            IDR {produk.harga.toLocaleString("id-ID")}{" "}
+            {produk.ukuranDimensi && (
+              <span className="text-black/40 font-normal">
+                · {produk.ukuranDimensi}
+              </span>
+            )}
+          </p>
+        </div>
+
+        <div className="pt-2 border-t border-black/5 flex items-center justify-between text-[10px] text-black/50">
+          <span className="truncate">{produk.toko?.namaToko || "The Archive"}</span>
+          <span className="italic shrink-0 ml-1">{produk.toko?.kota || "ID"}</span>
+        </div>
       </div>
-    </Link>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:rounded-md ${
-        isActive
-          ? "text-white font-semibold opacity-100"
-          : "text-white/40 hover:text-white/70"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm tracking-wide">{label}</span>
     </Link>
   );
 }

@@ -73,4 +73,9 @@ export class TokoController {
   ) {
     return this.tokoService.updateTokoDetail(+id, body);
   }
+
+  @Get('user/:userId')
+  async getTokoByUserId(@Param('userId') userId: string) {
+    return this.tokoService.getTokoByUserId(+userId);
+  }
 }

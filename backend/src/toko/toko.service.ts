@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
 import * as bcrypt from 'bcrypt';
@@ -191,5 +195,17 @@ export class TokoService {
 
       return updatedToko;
     });
+  }
+
+  async getTokoByUserId(userId: number) {
+    const toko = await this.prisma.tokoSeller.findFirst({
+      where: { userId },
+    });
+
+    if (!toko) {
+      throw new NotFoundException('Toko untuk user ini tidak ditemukan');
+    }
+
+    return toko;
   }
 }
