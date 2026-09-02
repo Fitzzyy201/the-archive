@@ -70,10 +70,10 @@ export default function Beranda() {
         ))}
       </div>
 
-      {/* Main content */}
+     
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
         
-        {/* BANNER INFORMASI STATUS UNTUK CALON SELLER (Hanya muncul jika sudah isMounted) */}
+
         {isMounted && isSellerPending && (
           <div className="m-5 sm:mx-10 sm:mt-6 bg-amber-50 border border-amber-200 p-4 rounded-md flex items-start gap-3 text-amber-900 shadow-sm">
             <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -88,7 +88,7 @@ export default function Beranda() {
           </div>
         )}
 
-        {/* Header */}
+      
         <div className="px-5 sm:px-10 py-6 bg-white border-b border-black/10">
           <p className={`${mono.className} text-[10px] tracking-[0.25em] text-black/40 mb-4`}>
             THE ARCHIVE
@@ -133,8 +133,6 @@ export default function Beranda() {
             </Link>
           </div>
         </div>
-
-        {/* Body */}
         <div className="flex-1 w-full px-5 sm:px-10 md:px-14 py-10">
           <div className="text-center mb-10">
             <p className={`${mono.className} text-[10px] tracking-[0.3em] text-black/40 mb-2`}>
