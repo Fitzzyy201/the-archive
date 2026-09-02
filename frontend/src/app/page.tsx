@@ -182,9 +182,7 @@ export default function Beranda() {
         
         {/* HERO EDITORIAL SECTION */}
         <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 border border-black/10 rounded-full text-[9px] tracking-[0.25em] text-black/50 uppercase mb-3 bg-white/60 font-mono">
-            <Sparkles className="w-3 h-3 text-black/60" /> ARCHIVAL CURATION
-          </div>
+          
           <h2
             className={`${playfair.className} text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-black`}
           >

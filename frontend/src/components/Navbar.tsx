@@ -35,6 +35,7 @@ export default function Navbar({ onSearch }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -133,7 +134,7 @@ export default function Navbar({ onSearch }: NavbarProps) {
             {/* Login / Auth Button */}
             {!isLoggedIn ? (
               <Link
-                href="/login-buyer"
+                href="/login"
                 className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] bg-black text-white rounded-sm px-4 py-2 hover:bg-black/85 transition whitespace-nowrap`}
               >
                 LOGIN
@@ -192,7 +193,7 @@ export default function Navbar({ onSearch }: NavbarProps) {
             </Link>
             {!isLoggedIn ? (
               <Link
-                href="/login-buyer"
+                href="/login"
                 className={`${mono.className} text-[9px] font-medium tracking-wider bg-black text-white px-3 py-1.5 rounded-sm`}
               >
                 LOGIN

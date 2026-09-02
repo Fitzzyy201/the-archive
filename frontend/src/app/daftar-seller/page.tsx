@@ -61,7 +61,7 @@ export default function RegistrasiSeller() {
 
     if (!token) {
       alert("Anda harus login terlebih dahulu sebelum membuka toko!");
-      router.push("/login-buyer");
+      router.push("/login");
       return;
     }
 
@@ -251,7 +251,7 @@ export default function RegistrasiSeller() {
 
             <p className="text-center text-sm text-gray-700 mt-6">
               Sudah punya akun?{" "}
-              <Link href="/login-seller" className="font-semibold text-black">
+              <Link href="/login" className="font-semibold text-black">
                 Login di sini
               </Link>
             </p>

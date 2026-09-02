@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-export default function LoginBuyer() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,14 +39,31 @@ export default function LoginBuyer() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        if (data.role) localStorage.setItem("role", data.role);
+        // 1. Ambil data response secara fleksibel
+        const token = data.access_token || data.token;
+        const userObj = data.user || data;
+        const userId = data.user?.id || data.userId || data.id;
+        const role = data.user?.role || data.role;
+
+        // 2. Simpan data ke localStorage secara konsisten
+        if (token) localStorage.setItem("token", token);
+        if (userObj) localStorage.setItem("user", JSON.stringify(userObj));
+        if (userId) localStorage.setItem("userId", String(userId));
+        if (role) localStorage.setItem("role", role);
+
+        // Hapus key bekas lama jika ada
+        localStorage.removeItem("userRole");
 
         alert("Login Berhasil!");
-        router.push("/");
+
+        // 3. Redirect otomatis sesuai Role
+        if (role === "Seller") {
+          window.location.href = "/beranda-seller";
+        } else {
+          window.location.href = "/";
+        }
       } else {
-        alert(`Gagal Login: ${data.message}`);
+        alert(`Gagal Login: ${data.message || "Email atau password salah."}`);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -140,15 +157,27 @@ export default function LoginBuyer() {
             </form>
           </div>
 
-          <p className="text-center text-xs text-black/60 mt-6 font-sans">
-            Belum memiliki akun?{" "}
-            <Link
-              href="/daftar-buyer"
-              className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
-            >
-              Daftar di sini
-            </Link>
-          </p>
+          {/* Footer Options */}
+          <div className="text-center text-xs text-black/60 mt-6 font-sans space-y-2">
+            <p>
+              Belum memiliki akun?{" "}
+              <Link
+                href="/daftar-buyer"
+                className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
+              >
+                Daftar di sini
+              </Link>
+            </p>
+            <p>
+              Ingin buka toko?{" "}
+              <Link
+                href="/daftar-seller"
+                className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
+              >
+                Yuk klik di sini
+              </Link>
+            </p>
+          </div>
         </div>
       </main>
     </div>

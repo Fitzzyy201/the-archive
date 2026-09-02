@@ -34,7 +34,7 @@ const token = data.token || data.access_token;
 if (response.ok) {
   if (data.role !== "Admin") {
     alert("Akses Ditolak! Anda bukan staf yang berwenang.");
-    router.push("/login-buyer");
+    router.push("/login");
     return;
   }
 

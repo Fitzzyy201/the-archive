@@ -89,7 +89,7 @@ export default function LupaPassword() {
       });
       if (res.ok) {
         alert("Password berhasil diubah! Silakan login kembali.");
-        router.push("/login-buyer"); // Arahkan ke halaman login
+        router.push("/login"); // Arahkan ke halaman login
       } else {
         alert("Gagal mengubah password.");
       }

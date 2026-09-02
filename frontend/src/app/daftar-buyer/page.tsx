@@ -83,7 +83,7 @@ export default function DaftarBuyer() {
 
       if (response.ok) {
         alert("Pendaftaran Berhasil! Silakan Login.");
-        router.push("/login-buyer");
+        router.push("/login");
       } else {
         alert(`Gagal Mendaftar: ${data.message}`);
       }
@@ -273,7 +273,7 @@ export default function DaftarBuyer() {
           <p className="text-center text-xs text-black/60 mt-6 font-sans">
             Sudah memiliki akun?{" "}
             <Link
-              href="/login-buyer"
+              href="/login"
               className="font-semibold text-black underline underline-offset-4 hover:opacity-80 transition"
             >
               Masuk di sini
