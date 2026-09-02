@@ -23,7 +23,7 @@ export default function NotifikasiSellerPage() {
       <section className="flex min-h-[calc(100vh-70px)] w-full items-center justify-center px-6">
         <div className="flex w-full max-w-[1000px] flex-col items-center justify-center text-center">
 
-          {/* ICON */}
+         
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-black/10 bg-[#FAF9F6]">
             <Bell
               size={28}
@@ -32,14 +32,14 @@ export default function NotifikasiSellerPage() {
             />
           </div>
 
-          {/* TITLE */}
+    
           <h1
             className={`${playfair.className} text-3xl font-semibold tracking-tight`}
           >
             No Notifications
           </h1>
 
-          {/* DESCRIPTION */}
+          
           <p className="mt-3 max-w-md text-[11px] leading-relaxed tracking-wide text-black/45">
             Belum ada notifikasi untuk saat ini.
             <br />
