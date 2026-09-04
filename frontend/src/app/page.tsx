@@ -42,22 +42,22 @@ export default function Beranda() {
   const [products, setProducts] = useState<BackendProduk[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [tokoStatus, setTokoStatus] = useState< string | null>(null);
 
   useEffect(() => {
-    const loadPageData = async () => {
-      const token = localStorage.getItem("token");
-      const role =
-        localStorage.getItem("role") || localStorage.getItem("userRole");
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role") || localStorage.getItem("userRole");
 
-      // 1. Wajib ada TOKEN dan ROLE === "Seller" baru me-redirect ke seller
-      if (token && role === "Seller") {
-        router.push("/beranda-seller");
-        return;
-      }
+    // 1. Jika role lokal sudah Seller, langsung lempar ke Beranda Seller
+    if (token && role === "Seller") {
+      router.push("/beranda-seller");
+      return;
+    }
 
-      setIsMounted(true);
+    setIsMounted(true);
 
-      // 2. Fetch published products dari backend
+    // 2. Fetch Katalog Produk untuk Tampilan Buyer
+    const fetchCatalog = async () => {
       try {
         const res = await fetch("http://localhost:3001/produk");
         if (res.ok) {
@@ -69,53 +69,102 @@ export default function Beranda() {
       } finally {
         setIsLoading(false);
       }
+    };
+    fetchCatalog();
 
-      // 3. Cek status toko calon seller
+    // 3. Cek Status Toko secara Real-time (Token atau pendingTokoId)
+    const checkTokoStatus = async () => {
+      const currentToken = localStorage.getItem("token");
+      const pendingTokoId = localStorage.getItem("pendingTokoId");
       const agreed = localStorage.getItem("agreedToSellerRules") === "true";
 
-      if (agreed) {
-        if (!token) {
-          setIsSellerPending(true);
-          return;
-        }
-
+      if (currentToken) {
         try {
-          const res = await fetch(`http://localhost:3001/toko/status-my-shop`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          const res = await fetch("http://localhost:3001/toko/status-my-shop", {
+            headers: { Authorization: `Bearer ${currentToken}` },
           });
 
           if (res.ok) {
             const data = await res.json();
 
             if (data.statusVerif === "Approved") {
+              localStorage.setItem("role", "Seller");
+              localStorage.setItem("tokoId", data.id);
               localStorage.removeItem("agreedToSellerRules");
+              localStorage.removeItem("pendingTokoId");
+              
               setIsSellerApproved(true);
               setIsSellerPending(false);
-              localStorage.setItem("tokoId", data.id);
             } else if (data.statusVerif === "Pending") {
               setIsSellerPending(true);
+              setIsSellerApproved(false);
+            } else {
+              setIsSellerPending(false);
+              setIsSellerApproved(false);
             }
-          } else {
-            setIsSellerPending(true);
           }
         } catch (err) {
-          console.error("Gagal cek status toko:", err);
-          setIsSellerPending(true);
+          console.error("Gagal cek status toko via token:", err);
         }
+      } else if (pendingTokoId) {
+        try {
+          const res = await fetch(`http://localhost:3001/toko/${pendingTokoId}`);
+
+          if (res.ok) {
+            const data = await res.json();
+
+            if (data.statusVerif === "Approved") {
+              localStorage.removeItem("pendingTokoId");
+              localStorage.removeItem("agreedToSellerRules");
+              
+              setIsSellerApproved(true);
+              setIsSellerPending(false);
+            } else if (data.statusVerif === "Pending") {
+              setIsSellerPending(true);
+              setIsSellerApproved(false);
+            } else {
+              setIsSellerPending(false);
+              setIsSellerApproved(false);
+            }
+          }
+        } catch (err) {
+          console.error("Gagal cek status pending toko:", err);
+        }
+      } else if (agreed) {
+        setIsSellerPending(true);
+        setIsSellerApproved(false);
       } else {
         setIsSellerPending(false);
+        setIsSellerApproved(false);
       }
     };
 
-    loadPageData();
+    checkTokoStatus();
+
+    // Polling setiap 3 detik agar status berubah otomatis tanpa refresh
+    const interval = setInterval(() => {
+      const pendingTokoId = localStorage.getItem("pendingTokoId");
+      const currentToken = localStorage.getItem("token");
+      const agreed = localStorage.getItem("agreedToSellerRules") === "true";
+
+      if (pendingTokoId || (currentToken && agreed)) {
+        checkTokoStatus();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [router]);
 
   const handleMasukDashboard = () => {
     localStorage.removeItem("agreedToSellerRules");
-    localStorage.setItem("userRole", "Seller");
-    router.push("/beranda-seller");
+    localStorage.removeItem("pendingTokoId");
+    const token = localStorage.getItem("token");
+    if (token) {
+      localStorage.setItem("role", "Seller");
+      router.push("/beranda-seller");
+    } else {
+      router.push("/login");
+    }
   };
 
   // Filter products by search query
@@ -128,6 +177,8 @@ export default function Beranda() {
       p.toko?.kota?.toLowerCase().includes(q)
     );
   });
+
+
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black selection:bg-black selection:text-white">
@@ -154,7 +205,7 @@ export default function Beranda() {
               onClick={handleMasukDashboard}
               className="w-full flex items-center justify-center gap-2 bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition"
             >
-              <Store className="w-4 h-4" /> Masuk ke Dashboard Seller
+              <Store className="w-4 h-4" /> Login sebagai Seller
             </button>
           </div>
         </div>

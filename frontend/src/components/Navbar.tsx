@@ -10,6 +10,7 @@ import {
   Home,
   Bell,
   User,
+  LogOut,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
@@ -35,7 +36,6 @@ export default function Navbar({ onSearch }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -46,6 +46,20 @@ export default function Navbar({ onSearch }: NavbarProps) {
     setSearchQuery(val);
     if (onSearch) {
       onSearch(val);
+    }
+  };
+
+  const handleLogout = () => {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("tokoId");
+      
+      // Refresh total ke halaman utama
+      window.location.href = "/";
     }
   };
 
@@ -131,7 +145,7 @@ export default function Navbar({ onSearch }: NavbarProps) {
               BUKA TOKO
             </Link>
 
-            {/* Login / Auth Button */}
+            {/* Login / Auth & Logout Area */}
             {!isLoggedIn ? (
               <Link
                 href="/login"
@@ -140,12 +154,21 @@ export default function Navbar({ onSearch }: NavbarProps) {
                 LOGIN
               </Link>
             ) : (
-              <Link
-                href="/profile"
-                className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] bg-black text-white rounded-sm px-3.5 py-2 hover:bg-black/85 transition flex items-center gap-1.5 whitespace-nowrap`}
-              >
-                <User className="w-3.5 h-3.5" /> AKUN
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/profile"
+                  className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] bg-black text-white rounded-sm px-3.5 py-2 hover:bg-black/85 transition flex items-center gap-1.5 whitespace-nowrap`}
+                >
+                  <User className="w-3.5 h-3.5" /> AKUN
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  title="Keluar Akun"
+                  className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] border border-black/20 hover:border-black hover:bg-black hover:text-white rounded-sm px-2.5 py-2 transition text-black flex items-center justify-center`}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
 
             {/* Quick Action Icons */}
@@ -199,12 +222,21 @@ export default function Navbar({ onSearch }: NavbarProps) {
                 LOGIN
               </Link>
             ) : (
-              <Link
-                href="/profile"
-                className={`${mono.className} text-[9px] font-medium tracking-wider bg-black text-white px-2.5 py-1.5 rounded-sm flex items-center gap-1`}
-              >
-                <User className="w-3 h-3" /> AKUN
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href="/profile"
+                  className={`${mono.className} text-[9px] font-medium tracking-wider bg-black text-white px-2.5 py-1.5 rounded-sm flex items-center gap-1`}
+                >
+                  <User className="w-3 h-3" /> AKUN
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  title="Keluar"
+                  className={`${mono.className} text-[9px] font-medium border border-black/20 text-black px-2 py-1.5 rounded-sm hover:bg-black hover:text-white transition flex items-center justify-center`}
+                >
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
             )}
           </div>
         </div>

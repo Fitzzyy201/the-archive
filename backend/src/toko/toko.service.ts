@@ -143,6 +143,7 @@ export class TokoService {
       kota: toko.kota,
       email: toko.user?.email || '',
       fotoToko: fotoTokoVal || toko.user?.fotoProfil || '',
+      statusVerif: toko.statusVerif,
     };
   }
 

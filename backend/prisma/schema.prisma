@@ -54,6 +54,7 @@ enum JenisTransaksi {
 
 model User {
   id          Int        @id @default(autoincrement()) @map("id_user")
+  nama        String?    @db.VarChar(100)
   email       String     @unique @db.VarChar(100)
   password    String     @db.VarChar(255)
   role        Role       @default(Buyer)

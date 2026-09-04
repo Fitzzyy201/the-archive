@@ -3,42 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Home, Package, ShoppingBag, User, Upload, } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  Package,
+  ShoppingBag,
+  User,
+  Upload,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Playfair_Display, Inter } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
-const DAFTAR_KOTA = [
-  "Bandung",
-  "Bandung Barat",
-  "Bekasi",
-  "Bogor",
-  "Ciamis",
-  "Cianjur",
-  "Cirebon",
-  "Depok",
-  "Garut",
-  "Indramayu",
-  "Jakarta Barat",
-  "Jakarta Pusat",
-  "Jakarta Selatan",
-  "Jakarta Timur",
-  "Jakarta Utara",
-  "Karawang",
-  "Kuningan",
-  "Majalengka",
-  "Pangandaran",
-  "Purwakarta",
-  "Subang",
-  "Sukabumi",
-  "Sumedang",
-  "Surabaya",
-  "Tangerang",
-  "Tangerang Selatan",
-  "Tasikmalaya",
-  "Yogyakarta",
-];
-
 
 export default function RegistrasiSeller() {
   const [shopName, setShopName] = useState("");
@@ -49,29 +27,24 @@ export default function RegistrasiSeller() {
   const [nik, setNik] = useState("");
   const [npwp, setNpwp] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [npwpFile, setNpwpFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      alert("Anda harus login terlebih dahulu sebelum membuka toko!");
-      router.push("/login");
-      return;
-    }
+    
 
     try {
-      // 2. Nembak API backend register toko
       const response = await fetch("http://localhost:3001/toko/register-seller", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Kirim JWT Token
         },
         body: JSON.stringify({
           email: email,
@@ -88,7 +61,10 @@ export default function RegistrasiSeller() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Pendaftaran Toko Berhasil! 🎉 Menunggu verifikasi admin.");
+        if (data.tokoId) {
+          localStorage.setItem("pendingTokoId", String(data.tokoId));
+        }
+        alert("Pendaftaran Toko Berhasil! Menunggu verifikasi admin.");
         router.push("/kontrak-seller");
       } else {
         alert(`Gagal Mendaftar Toko: ${data.message || "Terjadi kesalahan"}`);
@@ -96,6 +72,8 @@ export default function RegistrasiSeller() {
     } catch (error) {
       console.error("Error:", error);
       alert("Gagal terhubung ke backend! Pastikan server NestJS aktif.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -222,13 +200,27 @@ export default function RegistrasiSeller() {
                 <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
                   PASSWORD
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-black"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 pr-10 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-gray-400 hover:text-black transition focus:outline-none"
+                    title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -243,9 +235,10 @@ export default function RegistrasiSeller() {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-black text-white rounded-md py-3.5 font-medium mt-4 hover:bg-gray-900 transition"
               >
-                DAFTAR & AJUKAN VERIFIKASI
+                {isLoading ? "MENDAFTARKAN..." : "DAFTAR & AJUKAN VERIFIKASI"}
               </button>
             </form>
 

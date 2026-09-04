@@ -64,13 +64,19 @@ export default function LupaPassword() {
 
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/auth/verify-otp", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otpString }),
       });
-      if (res.ok) setStep(3);
-      else alert("OTP salah atau kadaluarsa.");
+
+      const data = await res.json();
+
+      if (res.ok) {setStep(3);
+
+      } else{ 
+        alert( data.message || "OTP salah atau kadaluarsa.");
+      }
     } catch (error) {
       alert("Gagal terhubung ke server.");
     } finally {
