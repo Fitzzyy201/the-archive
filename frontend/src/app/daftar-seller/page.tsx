@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, Home, Package, ShoppingBag, User, Upload } from "lucide-react";
@@ -8,6 +8,19 @@ import { Playfair_Display, Inter } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
+
+const INDONESIAN_CITIES = [
+  "Jakarta Pusat", "Jakarta Utara", "Jakarta Barat", "Jakarta Selatan", "Jakarta Timur",
+  "Bekasi", "Bogor", "Depok", "Tangerang", "Tangerang Selatan",
+  "Bandung", "Cimahi", "Sukabumi", "Cirebon", "Tasikmalaya",
+  "Surabaya", "Malang", "Sidoarjo", "Gresik", "Kediri",
+  "Semarang", "Solo", "Yogyakarta", "Magelang", "Salatiga",
+  "Medan", "Binjai", "Pematangsiantar", "Padang", "Pekanbaru",
+  "Palembang", "Jambi", "Bengkulu", "Bandar Lampung", "Batam",
+  "Denpasar", "Mataram", "Kupang", "Pontianak", "Banjarmasin",
+  "Balikpapan", "Samarinda", "Makassar", "Manado", "Palu",
+  "Kendari", "Ambon", "Jayapura", "Sorong", "Ternate",
+];
 
 export default function RegistrasiSeller() {
   const [shopName, setShopName] = useState("");
@@ -20,6 +33,29 @@ export default function RegistrasiSeller() {
   const [password, setPassword] = useState("");
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [npwpFile, setNpwpFile] = useState<File | null>(null);
+
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const cityWrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredCities =
+    city.trim().length > 0
+      ? INDONESIAN_CITIES.filter((c) =>
+          c.toLowerCase().includes(city.trim().toLowerCase())
+        ).slice(0, 6)
+      : [];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        cityWrapperRef.current &&
+        !cityWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowCityDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,17 +114,51 @@ export default function RegistrasiSeller() {
                 />
               </div>
 
-              <div>
+              <div className="relative" ref={cityWrapperRef}>
                 <label className="block text-xs font-semibold tracking-wide mb-2 text-gray-800">
                   CITY
                 </label>
                 <input
                   type="text"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    setShowCityDropdown(true);
+                  }}
+                  onFocus={() => {
+                    if (city.trim().length > 0) setShowCityDropdown(true);
+                  }}
                   placeholder="e.g. Jakarta, Bekasi..."
+                  autoComplete="off"
                   className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-black"
                 />
+
+                {showCityDropdown && filteredCities.length > 0 && (
+                  <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredCities.map((c) => (
+                      <li key={c}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCity(c);
+                            setShowCityDropdown(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-black hover:bg-gray-100 transition"
+                        >
+                          {c}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {showCityDropdown &&
+                  city.trim().length > 0 &&
+                  filteredCities.length === 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg px-3 py-2 text-sm text-gray-400">
+                      Kota tidak ditemukan
+                    </div>
+                  )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
