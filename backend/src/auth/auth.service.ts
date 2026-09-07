@@ -10,12 +10,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -26,6 +28,17 @@ export class AuthService {
     if (userExists) {
       throw new HttpException(
         'Email udah terdaftar, pakai email lain bro!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const phoneExists = await this.prisma.user.findFirst({
+      where: { noTelp: dto.noTelp },
+    });
+
+    if (phoneExists) {
+      throw new HttpException(
+        'Nomor telepon sudah terdaftar, gunakan nomor telepon lain!',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -127,8 +140,31 @@ export class AuthService {
       data: { otpCode: otp, otpExpires: expires },
     });
 
-    //  TODO: Nanti bagian ini harus dihubungkan ke layanan email -ini bukan ai tapi gw yg ngetik
-    console.log(`[EMAIL SIMULASI] Kepada: ${email} | Kode OTP anda: ${otp}`);
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Kode OTP Reset Password - The Archive',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #faf9f6;">
+            <h2 style="font-family: serif; color: #111; text-align: center; margin-bottom: 8px;">THE ARCHIVE</h2>
+            <p style="text-align: center; font-size: 11px; letter-spacing: 2px; color: #888; text-transform: uppercase; margin-top: 0;">Password Recovery</p>
+            <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 16px 0;" />
+            <p style="color: #333; font-size: 14px; line-height: 1.6;">Halo,</p>
+            <p style="color: #444; font-size: 14px; line-height: 1.6;">Kami menerima permintaan untuk mereset kata sandi akun Anda. Gunakan kode verifikasi OTP berikut:</p>
+            <div style="text-align: center; margin: 24px 0;">
+              <span style="display: inline-block; font-size: 28px; font-weight: bold; letter-spacing: 8px; padding: 12px 24px; background-color: #000; color: #fff; border-radius: 4px;">${otp}</span>
+            </div>
+            <p style="color: #666; font-size: 12px; line-height: 1.5; text-align: center;">Kode OTP ini hanya berlaku selama <strong>10 menit</strong>. Jangan berikan kode ini kepada siapa pun.</p>
+            <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 20px 0;" />
+            <p style="color: #999; font-size: 10px; text-align: center;">Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini.</p>
+          </div>
+        `,
+      });
+      console.log(`[EMAIL BERHASIL DIKIRIM] Kepada: ${email} | Kode OTP: ${otp}`);
+    } catch (mailError) {
+      console.error('Gagal mengirim email via Nodemailer:', mailError);
+      console.log(`[FALLBACK CONSOLE OTP] Kepada: ${email} | Kode OTP: ${otp}`);
+    }
 
     return { message: 'Kode OTP telah dikirim ke email anda.' };
   }

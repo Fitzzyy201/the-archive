@@ -15,33 +15,102 @@ const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 const DAFTAR_KOTA = [
-  "Bandung",
-  "Bandung Barat",
+  "Bangkalan",
+  "Banjar",
+  "Banjarnegara",
+  "Bantul",
+  "Banyumas (Purwokerto)",
+  "Banyuwangi",
+  "Batang",
+  "Batu",
   "Bekasi",
+  "Blitar",
+  "Blora",
   "Bogor",
+  "Bojonegoro",
+  "Bondowoso",
+  "Boyolali",
+  "Brebes",
   "Ciamis",
   "Cianjur",
+  "Cilacap",
+  "Cimahi",
   "Cirebon",
+  "Demak",
   "Depok",
   "Garut",
+  "Gresik",
+  "Grobogan (Purwodadi)",
+  "Gunungkidul",
   "Indramayu",
   "Jakarta Barat",
   "Jakarta Pusat",
   "Jakarta Selatan",
   "Jakarta Timur",
   "Jakarta Utara",
+  "Jember",
+  "Jepara",
+  "Jombang",
+  "Karanganyar",
   "Karawang",
+  "Kebumen",
+  "Kediri",
+  "Kendal",
+  "Kepulauan Seribu",
+  "Klaten",
+  "Kudus",
+  "Kulon Progo",
   "Kuningan",
+  "Lamongan",
+  "Lebak (Rangkasbitung)",
+  "Lumajang",
+  "Madiun",
+  "Magelang",
+  "Magetan",
   "Majalengka",
+  "Malang",
+  "Mojokerto",
+  "Nganjuk",
+  "Ngawi",
+  "Pacitan",
+  "Pamekasan",
+  "Pandeglang",
   "Pangandaran",
+  "Pasuruan",
+  "Pati",
+  "Pekalongan",
+  "Pemalang",
+  "Ponorogo",
+  "Probolinggo",
+  "Purbalingga",
   "Purwakarta",
+  "Purworejo",
+  "Rembang",
+  "Salatiga",
+  "Sampang",
+  "Semarang",
+  "Serang",
+  "Sidoarjo",
+  "Situbondo",
+  "Sleman",
+  "Sragen",
   "Subang",
   "Sukabumi",
+  "Sukoharjo",
   "Sumedang",
+  "Sumenep",
+  "Surakarta (Solo)",
   "Surabaya",
   "Tangerang",
   "Tangerang Selatan",
   "Tasikmalaya",
+  "Tegal",
+  "Temanggung",
+  "Trenggalek",
+  "Tuban",
+  "Tulungagung",
+  "Wonogiri",
+  "Wonosobo",
   "Yogyakarta",
 ];
 
@@ -57,6 +126,28 @@ export default function DaftarBuyer() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { score: 0, label: "", color: "", text: "" };
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+
+    if (pass.length < 6) {
+      return { score: 1, label: "LEMAH", color: "bg-red-500", text: "text-red-500" };
+    }
+    if (score <= 2) {
+      return { score: 1, label: "LEMAH", color: "bg-red-500", text: "text-red-500" };
+    }
+    if (score === 3) {
+      return { score: 2, label: "SEDANG", color: "bg-amber-500", text: "text-amber-600" };
+    }
+    return { score: 3, label: "KUAT", color: "bg-emerald-600", text: "text-emerald-600" };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+
   const kotaTersaring = DAFTAR_KOTA.filter((item) =>
     item.toLowerCase().includes(kota.toLocaleLowerCase())
   );
@@ -65,6 +156,17 @@ export default function DaftarBuyer() {
 
   const handleDaftar = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (telepon.length < 10) {
+      alert("Nomor telepon minimal 10 digit angka.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Password minimal 6 karakter.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -74,6 +176,7 @@ export default function DaftarBuyer() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          nama: nama,
           email: email,
           password: password,
           noTelp: telepon,
@@ -86,7 +189,7 @@ export default function DaftarBuyer() {
         alert("Pendaftaran Berhasil! Silakan Login.");
         router.push("/login");
       } else {
-        alert(`Gagal Mendaftar: ${data.message}`);
+        alert(`Gagal Mendaftar: ${data.message || "Terjadi kesalahan"}`);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -170,6 +273,25 @@ export default function DaftarBuyer() {
                     )}
                   </button>
                 </div>
+
+                {/* Password Strength Indicator */}
+                {password.length > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
+                        KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                      </span>
+                      <span className={`${mono.className} text-black/40`}>
+                        {password.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 h-1">
+                      <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 1 ? passwordStrength.color : "bg-black/10"}`} />
+                      <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 2 ? passwordStrength.color : "bg-black/10"}`} />
+                      <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 3 ? passwordStrength.color : "bg-black/10"}`} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -191,13 +313,14 @@ export default function DaftarBuyer() {
                 <label
                   className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
-                  NOMOR TELEPON
+                  NOMOR TELEPON (ANGKA)
                 </label>
                 <input
                   type="tel"
+                  inputMode="numeric"
                   required
                   value={telepon}
-                  onChange={(e) => setTelepon(e.target.value)}
+                  onChange={(e) => setTelepon(e.target.value.replace(/\D/g, ""))}
                   placeholder="081234567890"
                   className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />

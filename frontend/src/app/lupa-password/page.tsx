@@ -3,23 +3,51 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mail, RefreshCw } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { ArrowLeft, Mail, RefreshCw, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 const inter = Inter({ subsets: ["latin"] });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 export default function LupaPassword() {
   const router = useRouter();
-  
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { score: 0, label: "", color: "", text: "" };
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+
+    if (pass.length < 6) {
+      return { score: 1, label: "LEMAH", color: "bg-red-500", text: "text-red-500" };
+    }
+    if (score <= 2) {
+      return { score: 1, label: "LEMAH", color: "bg-red-500", text: "text-red-500" };
+    }
+    if (score === 3) {
+      return { score: 2, label: "SEDANG", color: "bg-amber-500", text: "text-amber-600" };
+    }
+    return { score: 3, label: "KUAT", color: "bg-emerald-600", text: "text-emerald-600" };
+  };
+
+  const passwordStrength = getPasswordStrength(newPassword);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,18 +58,23 @@ export default function LupaPassword() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (res.ok) setStep(2);
-      else alert("Terjadi kesalahan pada server.");
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Kode OTP telah dikirim ke email Anda.");
+        setStep(2);
+      } else {
+        alert(`Gagal: ${data.message || "Terjadi kesalahan pada server."}`);
+      }
     } catch (error) {
-      alert("Gagal terhubung ke server.");
+      alert("Gagal terhubung ke server backend! Pastikan backend sudah jalan.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (isNaN(Number(value))) return; // Hanya angka
-    
+    if (value && isNaN(Number(value))) return;
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -60,11 +93,11 @@ export default function LupaPassword() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpString = otp.join("");
-    if (otpString.length < 6) return alert("Masukkan 6 digit OTP");
+    if (otpString.length < 6) return alert("Masukkan 6 digit kode OTP lengkap.");
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/verify-otp`, {
+      const res = await fetch("http://localhost:3001/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otpString }),
@@ -72,10 +105,10 @@ export default function LupaPassword() {
 
       const data = await res.json();
 
-      if (res.ok) {setStep(3);
-
-      } else{ 
-        alert( data.message || "OTP salah atau kadaluarsa.");
+      if (res.ok) {
+        setStep(3);
+      } else {
+        alert(data.message || "Kode OTP salah atau sudah kadaluarsa.");
       }
     } catch (error) {
       alert("Gagal terhubung ke server.");
@@ -86,6 +119,12 @@ export default function LupaPassword() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (newPassword.length < 6) {
+      alert("Password minimal 6 karakter.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("http://localhost:3001/auth/reset-password", {
@@ -93,11 +132,12 @@ export default function LupaPassword() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otp.join(""), newPassword }),
       });
+      const data = await res.json();
       if (res.ok) {
-        alert("Password berhasil diubah! Silakan login kembali.");
-        router.push("/login"); // Arahkan ke halaman login
+        alert("Password berhasil diubah! Silakan login dengan password baru Anda.");
+        router.push("/login");
       } else {
-        alert("Gagal mengubah password.");
+        alert(`Gagal: ${data.message || "Gagal mengubah password."}`);
       }
     } catch (error) {
       alert("Gagal terhubung ke server.");
@@ -107,143 +147,185 @@ export default function LupaPassword() {
   };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-col ${inter.className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-center relative px-4 sm:px-8 py-5 border-b border-gray-200">
-        <button onClick={() => router.back()} className="absolute left-4 sm:left-8">
-          <ArrowLeft className="w-5 h-5 text-black" />
-        </button>
-        <h1 className={`${playfair.className} text-xl sm:text-2xl font-bold tracking-widest uppercase text-black`}>
-          {step === 2 ? "AUTHENTICATION" : "LUPA KATA SANDI"}
-        </h1>
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black">
+      {/* Top Navbar */}
+      <Navbar />
 
-      <div className="flex-1 flex flex-col items-center pt-16 px-6">
-        
-        {step === 1 && (
-          <div className="w-full max-w-sm text-center">
-            <div className="w-12 h-12 border border-black mx-auto flex items-center justify-center mb-6">
-              <RefreshCw className="w-5 h-5 text-black" />
+      <main
+        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+      >
+        <div className="w-full max-w-md mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
+            >
+              <ArrowLeft className="w-4 h-4" /> KEMBALI
+            </button>
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-black/5 border border-black/10 rounded-full mb-3 text-black">
+              {step === 1 && <Mail className="w-6 h-6" />}
+              {step === 2 && <RefreshCw className="w-6 h-6" />}
+              {step === 3 && <KeyRound className="w-6 h-6" />}
             </div>
-            <h2 className="text-lg font-medium text-black mb-2">Pulihkan Akun</h2>
-            <p className="text-sm text-gray-600 mb-10 leading-relaxed">
-              Masukkan email Anda untuk menerima kode verifikasi.
+            <h1
+              className={`${playfair.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
+            >
+              {step === 1 && "Pulihkan Akun"}
+              {step === 2 && "Verifikasi OTP"}
+              {step === 3 && "Password Baru"}
+            </h1>
+            <p className="text-black/50 text-xs sm:text-sm leading-relaxed">
+              {step === 1 && "Masukkan email terdaftar Anda untuk menerima kode OTP 6 digit."}
+              {step === 2 && `Masukkan 6 digit kode OTP yang kami kirimkan ke ${email}`}
+              {step === 3 && "Buat kata sandi baru yang aman untuk akun The Archive Anda."}
             </p>
+          </div>
 
-            <form onSubmit={handleRequestOtp} className="text-left space-y-6">
-              <div>
-                <label className="block text-[10px] font-semibold tracking-wider uppercase text-black mb-2">
-                  ALAMAT EMAIL
-                </label>
-                <div className="flex items-center border-b border-black py-2">
-                  <Mail className="w-4 h-4 text-gray-500 mr-3" />
+          {/* Form Card */}
+          <div className="bg-white border border-black/10 rounded-sm p-6 sm:p-8 shadow-sm">
+            {step === 1 && (
+              <form onSubmit={handleRequestOtp} className="space-y-5">
+                <div>
+                  <label
+                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  >
+                    ALAMAT EMAIL TERDAFTAR
+                  </label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@contoh.com"
-                    className="w-full text-sm outline-none placeholder:text-gray-300 text-black"
+                    placeholder="nama@email.com"
+                    className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                   />
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-black text-white text-sm tracking-widest font-medium py-3.5 mt-8 hover:bg-gray-900 transition"
-              >
-                {isLoading ? "MEMPROSES..." : "KIRIM KODE"}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50 mt-4"
+                >
+                  {isLoading ? "MEMPROSES..." : "KIRIM KODE OTP"}
+                </button>
+              </form>
+            )}
 
-            <button onClick={() => router.back()} className="mt-6 text-xs text-gray-500 underline uppercase tracking-wider hover:text-black transition">
-              Kembali ke Halaman Masuk
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="w-full max-w-sm text-center border border-gray-200 p-8 shadow-sm relative">
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-black"></div>
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-black"></div>
-            
-            <h2 className={`${playfair.className} text-2xl font-bold text-black mb-2`}>Verifikasi OTP</h2>
-            <p className="text-sm text-gray-600 mb-8 leading-relaxed">
-              Masukkan kode OTP yang telah dikirim ke email Anda.
-            </p>
-
-            <form onSubmit={handleVerifyOtp} className="space-y-8">
-              <div className="flex justify-between gap-2">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => { inputRefs.current[index] = el; }}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                    className={`${playfair.className} w-10 h-12 sm:w-12 sm:h-14 border border-gray-300 text-center text-xl text-black focus:border-black focus:outline-none transition`}
-                    placeholder="0"
-                  />
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-black text-white text-sm tracking-widest font-medium py-3.5 hover:bg-gray-900 transition"
-              >
-                {isLoading ? "MEMPROSES..." : "VERIFIKASI"}
-              </button>
-            </form>
-
-            <p className="mt-8 text-xs text-gray-500 tracking-wide">
-              Tidak menerima kode? <br />
-              <button onClick={handleRequestOtp} className="text-black font-semibold underline mt-1 uppercase">
-                Kirim Ulang Kode
-              </button>
-            </p>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="w-full max-w-sm text-center">
-            <h2 className={`${playfair.className} text-2xl font-bold text-black mb-2`}>Password Baru</h2>
-            <p className="text-sm text-gray-600 mb-8">
-              Silakan buat kata sandi baru untuk akun Anda.
-            </p>
-
-            <form onSubmit={handleResetPassword} className="text-left space-y-6">
-              <div>
-                <label className="block text-[10px] font-semibold tracking-wider uppercase text-black mb-2">
-                  PASSWORD BARU
-                </label>
-                <div className="border-b border-black py-2">
-                  <input
-                    type="password"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full text-sm outline-none placeholder:text-gray-300 text-black"
-                  />
+            {step === 2 && (
+              <form onSubmit={handleVerifyOtp} className="space-y-6 text-center">
+                <div className="flex justify-center gap-2 sm:gap-3">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className={`${playfair.className} w-11 h-14 sm:w-12 sm:h-16 border border-black/20 text-center text-xl font-bold text-black focus:border-black focus:outline-none transition rounded-sm bg-[#FAF9F6]/50`}
+                      placeholder="•"
+                    />
+                  ))}
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-black text-white text-sm tracking-widest font-medium py-3.5 mt-8 hover:bg-gray-900 transition"
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50"
+                >
+                  {isLoading ? "MEMVERIFIKASI..." : "VERIFIKASI KODE"}
+                </button>
+
+                <div className="pt-2 text-xs text-black/50">
+                  Tidak menerima kode?{" "}
+                  <button
+                    type="button"
+                    onClick={handleRequestOtp}
+                    className="text-black font-semibold underline underline-offset-4 hover:text-black/70 uppercase"
+                  >
+                    Kirim Ulang
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {step === 3 && (
+              <form onSubmit={handleResetPassword} className="space-y-5">
+                <div>
+                  <label
+                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  >
+                    KATA SANDI BARU
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full border-b border-black/20 px-1 py-2 pr-8 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-1 text-black/40 hover:text-black transition focus:outline-none"
+                      title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Password Strength Indicator */}
+                  {newPassword.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex items-center justify-between text-[9px]">
+                        <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
+                          KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                        </span>
+                        <span className={`${mono.className} text-black/40`}>
+                          {newPassword.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 h-1">
+                        <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 1 ? passwordStrength.color : "bg-black/10"}`} />
+                        <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 2 ? passwordStrength.color : "bg-black/10"}`} />
+                        <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 3 ? passwordStrength.color : "bg-black/10"}`} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50 mt-4"
+                >
+                  {isLoading ? "MENYIMPAN..." : "SIMPAN PASSWORD BARU"}
+                </button>
+              </form>
+            )}
+
+            <div className="mt-6 pt-6 border-t border-black/10 text-center">
+              <Link
+                href="/login"
+                className="text-xs text-black/60 hover:text-black underline underline-offset-4 transition font-sans"
               >
-                {isLoading ? "MENYIMPAN..." : "SIMPAN PASSWORD"}
-              </button>
-            </form>
+                Kembali ke Halaman Login
+              </Link>
+            </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

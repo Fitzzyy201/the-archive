@@ -21,6 +21,16 @@ export class TokoService {
       throw new BadRequestException('Email sudah terdaftar!');
     }
 
+    const existingPhone = await this.prisma.user.findFirst({
+      where: { noTelp: dto.noTelp },
+    });
+
+    if (existingPhone) {
+      throw new BadRequestException(
+        'Nomor telepon sudah terdaftar, gunakan nomor telepon lain!',
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const result = await this.prisma.$transaction(async (tx) => {
