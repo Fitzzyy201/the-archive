@@ -39,24 +39,12 @@ const emptySlide = (): Slide => ({
   jumlahStok: "",
 });
 
-// Helper untuk mengubah file gambar jadi Base64 String
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
 export default function TambahProduk() {
   const [slides, setSlides] = useState<Slide[]>([emptySlide()]);
 
   const updateSlide = (index: number, patch: Partial<Slide>) => {
     setSlides((prev) =>
-      prev.map((slide, i) =>
-        i === index ? { ...slide, ...patch } : slide
-      )
+      prev.map((slide, i) => (i === index ? { ...slide, ...patch } : slide))
     );
   };
 
@@ -64,9 +52,7 @@ export default function TambahProduk() {
     setSlides((prev) =>
       prev.map((slide, i) => {
         if (i !== index) return slide;
-
         const exists = slide.defectTerpilih.includes(option);
-
         return {
           ...slide,
           defectTerpilih: exists
@@ -82,32 +68,14 @@ export default function TambahProduk() {
       alert("Maksimal 10 slide.");
       return;
     }
-
     setSlides((prev) => [...prev, emptySlide()]);
   };
 
   const handlePublish = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const TOKO_ID = Number(localStorage.getItem("tokoId"));
-
-      if (!token || !TOKO_ID) {
-        alert("Sesi Anda telah berakhir. Silahkan login kembali.");
-        return;
-      }
+      const TOKO_ID = 1;
 
       for (const slide of slides) {
-        if (!slide.judulProduk || !slide.harga) {
-          alert("Harap isi judul Produk dan harga terlebih dahulu brayy.");
-          return;
-        }
-
-        let base64Foto = "";
-        if (slide.fotoProduk) {
-          base64Foto = await fileToBase64(slide.fotoProduk);
-        }
-
         const payload = {
           tokoId: TOKO_ID,
           namaProduk: slide.judulProduk,
@@ -115,31 +83,30 @@ export default function TambahProduk() {
           harga: Number(slide.harga) || 0,
           stok: Number(slide.jumlahStok) || 0,
           ukuranDimensi: slide.ukuranTiapStok || slide.dimensiProduk,
-          fotoProduk: base64Foto,
-          catatanKondisi: slide.catatanKondisi,
-          defectTerpilih: slide.defectTerpilih,
+          fotoProduk: slide.fotoProduk ? slide.fotoProduk.name : "",
           defect: slide.defectTerpilih.length > 0,
         };
+
         console.log("Mengirim produk:", payload);
 
         const response = await fetch("http://localhost:3001/produk", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Response backend error:", errorText);
+          console.error("Response backend:", errorText);
           throw new Error(`Gagal menambahkan produk: ${response.status}`);
         }
 
         const result = await response.json();
         console.log("Produk berhasil masuk backend:", result);
       }
+
       alert(`${slides.length} produk berhasil dipublish!`);
       setSlides([emptySlide()]);
     } catch (error) {
@@ -148,12 +115,10 @@ export default function TambahProduk() {
         "Produk gagal dipublish. Pastikan backend NestJS sedang berjalan dan cek Console."
       );
     }
-  }; // sampe cini yaa
+  };
 
   return (
-    <div
-      className={`${inter.className} min-h-screen flex flex-col bg-white`}
-    >
+    <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
       <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b">
         <button>
           <ArrowLeft className="w-5 h-5 text-black" />
@@ -177,12 +142,8 @@ export default function TambahProduk() {
               key={index}
               index={index}
               slide={slide}
-              onChange={(patch) =>
-                updateSlide(index, patch)
-              }
-              onToggleDefect={(option) =>
-                toggleDefect(index, option)
-              }
+              onChange={(patch) => updateSlide(index, patch)}
+              onToggleDefect={(option) => toggleDefect(index, option)}
             />
           ))}
 
@@ -195,9 +156,7 @@ export default function TambahProduk() {
               ADD ANOTHER SLIDE
             </span>
 
-            <span className="text-xs text-gray-400">
-              (Max 10 Slide)
-            </span>
+            <span className="text-xs text-gray-400">(Max 10 Slide)</span>
           </button>
 
           <button
@@ -234,11 +193,7 @@ function SlideCard({
           <input
             type="text"
             value={slide.judulProduk}
-            onChange={(e) =>
-              onChange({
-                judulProduk: e.target.value,
-              })
-            }
+            onChange={(e) => onChange({ judulProduk: e.target.value })}
             className={inputClass}
             placeholder="Masukkan judul produk"
           />
@@ -247,11 +202,7 @@ function SlideCard({
         <Field label="Deskripsi">
           <textarea
             value={slide.deskripsi}
-            onChange={(e) =>
-              onChange({
-                deskripsi: e.target.value,
-              })
-            }
+            onChange={(e) => onChange({ deskripsi: e.target.value })}
             rows={2}
             className={`${inputClass} resize-none`}
             placeholder="Deskripsikan produk"
@@ -262,12 +213,12 @@ function SlideCard({
           <Field label="Dimensi Produk (PxL)">
             <input
               type="text"
-              value={slide.dimensiProduk}
-              onChange={(e) =>
-                onChange({
-                  dimensiProduk: e.target.value,
-                })
-              }
+              inputMode="numeric"
+              value={slide.dimensiProduk ? `${slide.dimensiProduk} cm` : ""}
+              onChange={(e) => {
+                const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+                onChange({ dimensiProduk: onlyNumbers });
+              }}
               className={inputClass}
               placeholder="cm"
             />
@@ -275,15 +226,17 @@ function SlideCard({
 
           <Field label="Harga">
             <input
-              type="number"
-              value={slide.harga}
-              onChange={(e) =>
-                onChange({
-                  harga: e.target.value,
-                })
+              type="text"
+              inputMode="numeric"
+              value={
+                slide.harga ? Number(slide.harga).toLocaleString("id-ID") : ""
               }
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, "");
+                onChange({ harga: raw });
+              }}
               className={inputClass}
-              placeholder="Rp"
+              placeholder="Rp 0"
             />
           </Field>
         </div>
@@ -292,11 +245,7 @@ function SlideCard({
           label="Foto Produk"
           hint="(Max 5MB)"
           file={slide.fotoProduk}
-          onChange={(file) =>
-            onChange({
-              fotoProduk: file,
-            })
-          }
+          onChange={(file) => onChange({ fotoProduk: file })}
         />
 
         <div>
@@ -308,9 +257,7 @@ function SlideCard({
             <label className="w-16 h-16 shrink-0 border border-gray-300 rounded-md overflow-hidden cursor-pointer hover:border-black transition relative">
               {slide.fotoDefect ? (
                 <img
-                  src={URL.createObjectURL(
-                    slide.fotoDefect
-                  )}
+                  src={URL.createObjectURL(slide.fotoDefect)}
                   alt="Foto defect"
                   className="w-full h-full object-cover"
                 />
@@ -326,9 +273,7 @@ function SlideCard({
                 className="hidden"
                 onChange={(e) =>
                   onChange({
-                    fotoDefect: e.target.files
-                      ? e.target.files[0]
-                      : null,
+                    fotoDefect: e.target.files ? e.target.files[0] : null,
                   })
                 }
               />
@@ -336,11 +281,7 @@ function SlideCard({
 
             <textarea
               value={slide.catatanKondisi}
-              onChange={(e) =>
-                onChange({
-                  catatanKondisi: e.target.value,
-                })
-              }
+              onChange={(e) => onChange({ catatanKondisi: e.target.value })}
               rows={2}
               placeholder="Contoh: Small snag di lengan kiri. Hampir tidak terlihat saat dipakai."
               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-xs text-black placeholder:text-gray-400 focus:outline-none focus:border-black resize-none"
@@ -361,23 +302,17 @@ function SlideCard({
               >
                 <input
                   type="checkbox"
-                  checked={slide.defectTerpilih.includes(
-                    option
-                  )}
-                  onChange={() =>
-                    onToggleDefect(option)
-                  }
+                  checked={slide.defectTerpilih.includes(option)}
+                  onChange={() => onToggleDefect(option)}
                   className="w-4 h-4 accent-black cursor-pointer"
                 />
-
                 {option}
               </label>
             ))}
           </div>
 
           <p className="text-[10px] text-gray-400 mt-1.5">
-            *Dicentang salah satu = produk ditandai
-            memiliki defect
+            *Dicentang salah satu = produk ditandai memiliki defect
           </p>
         </div>
 
@@ -386,11 +321,7 @@ function SlideCard({
             <input
               type="text"
               value={slide.ukuranTiapStok}
-              onChange={(e) =>
-                onChange({
-                  ukuranTiapStok: e.target.value,
-                })
-              }
+              onChange={(e) => onChange({ ukuranTiapStok: e.target.value })}
               className={inputClass}
               placeholder="e.g. M, L, XL"
             />
@@ -399,12 +330,12 @@ function SlideCard({
           <Field label="Jumlah Stok">
             <input
               type="number"
+              min={0}
               value={slide.jumlahStok}
-              onChange={(e) =>
-                onChange({
-                  jumlahStok: e.target.value,
-                })
-              }
+              onChange={(e) => {
+                const value = Math.max(0, Number(e.target.value) || 0);
+                onChange({ jumlahStok: String(value) });
+              }}
               className={inputClass}
               placeholder="0"
             />
@@ -430,7 +361,6 @@ function Field({
       <label className="block text-xs font-semibold tracking-wide mb-1.5 text-gray-700">
         {label}
       </label>
-
       {children}
     </div>
   );
@@ -450,26 +380,15 @@ function UploadBox({
   return (
     <label className="border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center gap-1 py-8 px-2 text-center cursor-pointer hover:border-black transition">
       <Plus className="w-5 h-5 text-gray-400" />
-
       <span className="text-[11px] font-medium text-gray-600">
         {file ? file.name : label}
       </span>
-
-      <span className="text-[10px] text-gray-400">
-        {hint}
-      </span>
-
+      <span className="text-[10px] text-gray-400">{hint}</span>
       <input
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) =>
-          onChange(
-            e.target.files
-              ? e.target.files[0]
-              : null
-          )
-        }
+        onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
       />
     </label>
   );
