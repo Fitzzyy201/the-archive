@@ -19,7 +19,7 @@ import { ProdukModule } from './produk/produk.module';
       transport: {
         host: process.env.MAIL_HOST,
         port: Number(process.env.MAIL_PORT),
-        secure: false, // ubah ke true jika menggunakan port 465
+        secure: false,
         auth: {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASS,

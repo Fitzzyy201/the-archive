@@ -163,7 +163,10 @@ export class AuthService {
       console.log(`[EMAIL BERHASIL DIKIRIM] Kepada: ${email} | Kode OTP: ${otp}`);
     } catch (mailError) {
       console.error('Gagal mengirim email via Nodemailer:', mailError);
-      console.log(`[FALLBACK CONSOLE OTP] Kepada: ${email} | Kode OTP: ${otp}`);
+      throw new HttpException(
+        'Gagal mengirim email OTP. Periksa konfigurasi SMTP di .env (MAIL_USER, MAIL_PASS).',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return { message: 'Kode OTP telah dikirim ke email anda.' };

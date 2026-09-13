@@ -25,8 +25,8 @@ export class CreateProdukDto {
   ukuranDimensi!: string;
 
   @IsString()
-  @IsNotEmpty()
-  fotoProduk!: string;
+  @IsOptional()
+  fotoProduk?: string;
 
   @IsBoolean()
   @IsOptional()

@@ -37,7 +37,8 @@ export default function ProdukSeller() {
 
   const fetchProducts = async () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+    // Cek key role/userRole (sama seperti di beranda-seller)
+    const role = localStorage.getItem("role") || localStorage.getItem("userRole");
     const tokoId = localStorage.getItem("tokoId");
 
     if (role !== "Seller") {

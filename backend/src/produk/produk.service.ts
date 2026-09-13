@@ -58,7 +58,7 @@ export class ProdukService {
         harga: dto.harga,
         stok: dto.stok,
         ukuranDimensi: dto.ukuranDimensi,
-        fotoProduk: dto.fotoProduk,
+        fotoProduk: dto.fotoProduk ?? "",
         defect: dto.defect ?? false,
       },
     });
