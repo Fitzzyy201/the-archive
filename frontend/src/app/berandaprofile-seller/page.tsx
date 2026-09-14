@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Package, ShoppingBag, User, ChevronRight, Store } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -64,7 +65,7 @@ export default function ProfileSeller() {
       <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
+        <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
         <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
@@ -85,13 +86,7 @@ export default function ProfileSeller() {
             <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-black flex items-center justify-center bg-gray-50 overflow-hidden mb-6 shadow-sm">
               {toko.fotoToko ? (
                 <img
-                  src={
-                    !toko?.fotoToko
-                      ? "/placeholder.png"
-                      : toko.fotoToko.startsWith("http") || toko.fotoToko.startsWith("data:")
-                      ? toko.fotoToko
-                      : `http://localhost:3001/uploads/${toko.fotoToko}`
-                  }
+                  src={getProductImageUrl(toko.fotoToko)}
                   alt={toko?.namaToko || "Foto Toko"}
                   className="w-full h-full object-cover rounded-full"
                 />

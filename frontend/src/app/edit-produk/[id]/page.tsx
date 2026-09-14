@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, Save } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -68,18 +69,10 @@ export default function EditProduk({ params }: { params: Promise<{ id: string }>
             defect: data.defect || false,
           });
           
-          // Tampilkan preview gambar lama jika valid
-          const isValidUrl =
-            data.fotoProduk &&
-            (data.fotoProduk.startsWith("http://") ||
-             data.fotoProduk.startsWith("https://") ||
-             data.fotoProduk.startsWith("data:image"));
-             
-          setFotoPreview(
-            isValidUrl 
-              ? data.fotoProduk 
-              : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80"
-          );
+          // Tampilkan preview gambar lama jika ada
+          if (data.fotoProduk) {
+            setFotoPreview(getProductImageUrl(data.fotoProduk));
+          }
         } else {
           alert("Produk tidak ditemukan.");
           router.push("/produk-seller");

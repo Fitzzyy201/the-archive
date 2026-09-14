@@ -30,12 +30,12 @@ enum StatusProduk {
 }
 
 enum StatusPesanan {
-  BelumBayar
-  Diproses
-  Dikirim
-  Selesai
-  Dikomplain
-  Batal
+  PENDING
+  DIPROSES
+  DIKIRIM
+  SELESAI
+  DITOLAK
+  DIBATALKAN
 }
 
 enum StatusKomplain {
@@ -117,6 +117,7 @@ model Produk {
   toko TokoSeller @relation(fields: [tokoId], references: [id])
   cart Cart[]
   ulasan Ulasan[]
+  transaksiDetail TransaksiDetail[]
 
   @@map("produk")
 }
@@ -151,19 +152,38 @@ model Transaksi {
   buyerId       Int           @map("id_buyer")
   tokoId        Int           @map("id_toko")
   totalHarga    Int           @map("total_harga")
-  statusPesanan StatusPesanan @default(BelumBayar) @map("status_pesanan")
+  statusPesanan StatusPesanan @default(PENDING) @map("status_pesanan")
+  resi          String?       @map("resi")
+  alasanReject  String?       @map("alasan_reject")
   
   waktuTransaksi        DateTime  @default(now()) @map("waktu_transaksi")
-  batasWaktuTransaksi   DateTime? @map("batas_waktu_transaksi") // Buat Cron Job 15 Menit
-  batasWaktuKomplain    DateTime? @map("batas_waktu_komplain")  // Buat Cron Job 2x24 Jam
+  batasWaktuTransaksi   DateTime? @map("batas_waktu_transaksi")
+  batasWaktuKomplain    DateTime? @map("batas_waktu_komplain")
 
   // Relasi
-  buyer       User          @relation("BuyerTransaksi", fields: [buyerId], references: [id])
-  toko        TokoSeller    @relation(fields: [tokoId], references: [id])
+  buyer       User              @relation("BuyerTransaksi", fields: [buyerId], references: [id])
+  toko        TokoSeller        @relation(fields: [tokoId], references: [id])
   komplain    Komplain?
   logKeuangan LogKeuangan[]
+  detail      TransaksiDetail[]
+  shippingResi ShippingResi?
+  history     OrderHistory[]
 
   @@map("transaksi")
+}
+
+model TransaksiDetail {
+  id          Int       @id @default(autoincrement()) @map("id_detail")
+  transaksiId Int       @map("id_transaksi")
+  produkId    Int       @map("id_produk")
+  qty         Int
+  hargaSatuan Int       @map("harga_satuan")
+  subtotal    Int
+  
+  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
+  produk    Produk    @relation(fields: [produkId], references: [id])
+  
+  @@map("transaksi_detail")
 }
 
 model Komplain {
@@ -208,4 +228,31 @@ model Ulasan {
   produk Produk @relation(fields: [produkId], references: [id])
 
   @@map("ulasan")
+}
+
+model ShippingResi {
+  id            Int      @id @default(autoincrement()) @map("id_resi")
+  transaksiId   Int      @unique @map("id_transaksi")
+  nomorResi     String   @map("nomor_resi") @db.VarChar(100)
+  ekspedisi     String   @db.VarChar(100)
+  buktiResi     String?  @map("bukti_resi") @db.Text
+  waktuKirim    DateTime @default(now()) @map("waktu_kirim")
+
+  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
+
+  @@map("shipping_resi")
+}
+
+model OrderHistory {
+  id            Int           @id @default(autoincrement()) @map("id_history")
+  transaksiId   Int           @map("id_transaksi")
+  statusSebelum StatusPesanan @map("status_sebelum")
+  statusSesudah StatusPesanan @map("status_sesudah")
+  catatan       String?       @db.Text
+  dibuatOleh    Int           @map("dibuat_oleh")
+  waktuUbah     DateTime      @default(now()) @map("waktu_ubah")
+
+  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
+
+  @@map("order_history")
 }

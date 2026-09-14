@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -7,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TokoModule } from './toko/toko.module';
 import { AdminModule } from './admin/admin.module';
 import { ProdukModule } from './produk/produk.module';
+import { PesananModule } from './pesanan/pesanan.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { ProdukModule } from './produk/produk.module';
     TokoModule,
     AdminModule,
     ProdukModule,
+    PesananModule,
+    ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {
         host: process.env.MAIL_HOST,

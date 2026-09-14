@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Package, ShoppingBag, User, PackageSearch, LogOut } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -94,7 +95,7 @@ export default function BerandaSeller() {
         <div className="flex md:flex-col items-center justify-around md:justify-start md:items-stretch w-full md:gap-2">
           <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
           <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-          <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
+          <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
           <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
         </div>
 
@@ -160,15 +161,9 @@ export default function BerandaSeller() {
                     >
                       <div className="w-16 h-16 bg-black/5 rounded-sm overflow-hidden shrink-0">
                         <img
-                          src={
-                            !product.fotoProduk
-                              ? "/placeholder.png"
-                              : product.fotoProduk.startsWith("http") || product.fotoProduk.startsWith("data:")
-                              ? product.fotoProduk
-                              : `http://localhost:3001/uploads/${product.fotoProduk}`
-                          }
+                          src={getProductImageUrl(product.fotoProduk)}
                           alt={product.namaProduk}
-                          className="w-20 h-20 object-cover rounded-md"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex-1 flex flex-col justify-center">

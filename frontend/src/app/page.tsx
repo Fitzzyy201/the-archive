@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -288,15 +289,7 @@ function EmptyState() {
 }
 
 function ProdukCard({ produk }: { produk: BackendProduk }) {
-  const isValidUrl =
-    produk.fotoProduk &&
-    (produk.fotoProduk.startsWith("http://") ||
-      produk.fotoProduk.startsWith("https://") ||
-      produk.fotoProduk.startsWith("data:image"));
-
-  const displayImage = isValidUrl
-    ? produk.fotoProduk
-    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80";
+  const displayImage = getProductImageUrl(produk.fotoProduk);
 
   return (
     <Link

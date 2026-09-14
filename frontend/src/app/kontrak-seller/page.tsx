@@ -29,10 +29,10 @@ export default function KontrakSeller() {
     <div className="min-h-screen flex flex-col md:flex-row bg-white">
       {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
       <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem href="/beranda" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/profile" icon={<User className="w-5 h-5" />} label="PROFILE" />
+        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
+        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
+        <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
+        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
       {/* Main Content */}

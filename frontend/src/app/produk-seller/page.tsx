@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Package, ShoppingBag, User, Plus, PackageSearch, Trash2, X, Eye } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -114,7 +115,7 @@ export default function ProdukSeller() {
       <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3 relative z-10">
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
+        <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
         <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
       </div>
 
@@ -209,15 +210,7 @@ function ProductRow({
   onDelete: (id: number) => void;
   onViewDetail: () => void;
 }) {
-  const isValidUrl =
-    product.fotoProduk &&
-    (product.fotoProduk.startsWith("http://") ||
-      product.fotoProduk.startsWith("https://") ||
-      product.fotoProduk.startsWith("data:image"));
-
-  const displayImage = isValidUrl
-    ? product.fotoProduk
-    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80";
+  const displayImage = getProductImageUrl(product.fotoProduk);
 
   return (
     <div className="flex gap-4 bg-white border border-black/10 rounded-sm p-3 hover:border-black/30 transition">
@@ -288,15 +281,7 @@ function ProductRow({
 
 // Komponen Modal Detail Produk
 function ProductDetailModal({ product, onClose }: { product: Produk; onClose: () => void }) {
-  const isValidUrl =
-    product.fotoProduk &&
-    (product.fotoProduk.startsWith("http://") ||
-      product.fotoProduk.startsWith("https://") ||
-      product.fotoProduk.startsWith("data:image"));
-
-  const displayImage = isValidUrl
-    ? product.fotoProduk
-    : "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80";
+  const displayImage = getProductImageUrl(product.fotoProduk);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
