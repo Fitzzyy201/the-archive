@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { TokoService } from './toko.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
 
@@ -21,5 +21,18 @@ export class TokoController {
       body.status,
       body.alasanPenolakan,
     );
+  }
+
+  @Get('profile/:userId')
+  async getProfile(@Param('userId') userId: string) {
+    return this.tokoService.getProfile(+userId);
+  }
+
+  @Patch('profile/:userId')
+  async updateProfile(
+    @Param('userId') userId: string,
+    @Body() dto: { namaToko?: string; kota?: string; noTelp?: string; fotoProfil?: string },
+  ) {
+    return this.tokoService.updateProfile(+userId, dto);
   }
 }

@@ -78,4 +78,58 @@ export class TokoService {
       toko: updateToko,
     };
   }
+    async getProfile(userId: number) {
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: { email: true, fotoProfil: true },
+        },
+      },
+    });
+
+    if (!toko) {
+      throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    return {
+      namaToko: toko.namaToko,
+      kota: toko.kota,
+      noTelp: toko.noTelp,
+      email: toko.user.email,
+      fotoProfil: toko.user.fotoProfil,
+    };
+  }
+
+  async updateProfile(
+    userId: number,
+    dto: { namaToko?: string; kota?: string; noTelp?: string; fotoProfil?: string },
+  ) {
+    const toko = await this.prisma.tokoSeller.findUnique({ where: { userId } });
+
+    if (!toko) {
+      throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    const updatedToko = await this.prisma.tokoSeller.update({
+      where: { userId },
+      data: {
+        namaToko: dto.namaToko,
+        kota: dto.kota,
+        noTelp: dto.noTelp,
+      },
+    });
+
+    if (dto.fotoProfil) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { fotoProfil: dto.fotoProfil },
+      });
+    }
+
+    return {
+      message: 'Profil berhasil diperbarui',
+      toko: updatedToko,
+    };
+  }
 }
