@@ -73,6 +73,7 @@ model User {
   komplainDitangani Komplain[]       @relation("AdminKomplain")
   logKeuangan      LogKeuangan[]
   ulasanDiberikan Ulasan[] @relation("BuyerUlasan")
+  notifikasi       Notifikasi[]
 
   @@map("user")
 }
@@ -104,6 +105,7 @@ model TokoSeller {
 model Produk {
   id            Int          @id @default(autoincrement()) @map("id_produk")
   tokoId        Int          @map("id_toko")
+  kategoriId    Int?         @map("id_kategori")
   namaProduk    String       @map("nama_produk") @db.VarChar(150)
   deskripsi     String       @db.Text
   harga         Int
@@ -114,11 +116,14 @@ model Produk {
   statusProduk  StatusProduk @default(Aktif) @map("status_produk")
 
   // Relasi
-  toko TokoSeller @relation(fields: [tokoId], references: [id])
-  cart Cart[]
-  ulasan Ulasan[]
+  toko       TokoSeller  @relation(fields: [tokoId], references: [id])
+  kategori   Kategori?   @relation(fields: [kategoriId], references: [id])
+  cart       Cart[]
+  ulasan     Ulasan[]
   transaksiDetail TransaksiDetail[]
 
+  @@index([kategoriId])
+  @@fulltext([namaProduk, deskripsi])
   @@map("produk")
 }
 
@@ -148,17 +153,26 @@ model Cart {
 }
 
 model Transaksi {
-  id            Int           @id @default(autoincrement()) @map("id_transaksi")
-  buyerId       Int           @map("id_buyer")
-  tokoId        Int           @map("id_toko")
-  totalHarga    Int           @map("total_harga")
-  statusPesanan StatusPesanan @default(PENDING) @map("status_pesanan")
-  resi          String?       @map("resi")
-  alasanReject  String?       @map("alasan_reject")
+  id                  Int           @id @default(autoincrement()) @map("id_transaksi")
+  buyerId             Int           @map("id_buyer")
+  tokoId              Int           @map("id_toko")
+  totalHarga          Int           @map("total_harga")
+  statusPesanan       StatusPesanan @default(PENDING) @map("status_pesanan")
+  resi                String?       @map("resi")
+  alasanReject        String?       @map("alasan_reject")
   
-  waktuTransaksi        DateTime  @default(now()) @map("waktu_transaksi")
-  batasWaktuTransaksi   DateTime? @map("batas_waktu_transaksi")
-  batasWaktuKomplain    DateTime? @map("batas_waktu_komplain")
+  // Midtrans fields
+  midtransOrderId     String?       @unique @map("midtrans_order_id")
+  midtransToken       String?       @map("midtrans_token")
+  midtransStatus      String?       @map("midtrans_status")
+  paymentType         String?       @map("payment_type")
+  vaNumber            String?       @map("va_number")
+  expiredAt           DateTime?     @map("expired_at")
+  settledAt           DateTime?     @map("settled_at")
+  
+  waktuTransaksi      DateTime      @default(now()) @map("waktu_transaksi")
+  batasWaktuTransaksi DateTime?     @map("batas_waktu_transaksi")
+  batasWaktuKomplain  DateTime?     @map("batas_waktu_komplain")
 
   // Relasi
   buyer       User              @relation("BuyerTransaksi", fields: [buyerId], references: [id])
@@ -169,6 +183,8 @@ model Transaksi {
   shippingResi ShippingResi?
   history     OrderHistory[]
 
+  @@index([midtransOrderId])
+  @@index([statusPesanan, buyerId])
   @@map("transaksi")
 }
 
@@ -255,4 +271,37 @@ model OrderHistory {
   transaksi Transaksi @relation(fields: [transaksiId], references: [id])
 
   @@map("order_history")
+}
+
+model Kategori {
+  id           Int      @id @default(autoincrement()) @map("id_kategori")
+  namaKategori String   @unique @map("nama_kategori") @db.VarChar(100)
+  slug         String   @unique @db.VarChar(120)
+  deskripsi    String?  @db.Text
+  fotoKategori String?  @db.LongText
+  isActive     Boolean  @default(true) @map("is_active")
+  urutan       Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  produk Produk[]
+
+  @@map("kategori")
+}
+
+model Notifikasi {
+  id        Int      @id @default(autoincrement()) @map("id_notifikasi")
+  userId    Int      @map("id_user")
+  tipe      String   @db.VarChar(50)
+  title     String   @db.VarChar(200)
+  message   String   @db.Text
+  link      String?  @db.VarChar(500)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifikasi")
 }
