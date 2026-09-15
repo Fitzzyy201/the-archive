@@ -1,12 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
 import * as bcrypt from 'bcrypt';
-import { Role, StatusVerif } from '@prisma/client';
 
 @Injectable()
 export class TokoService {
@@ -21,30 +16,18 @@ export class TokoService {
       throw new BadRequestException('Email sudah terdaftar!');
     }
 
-    const existingPhone = await this.prisma.user.findFirst({
-      where: { noTelp: dto.noTelp },
-    });
-
-    if (existingPhone) {
-      throw new BadRequestException(
-        'Nomor telepon sudah terdaftar, gunakan nomor telepon lain!',
-      );
-    }
-
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // 1. User dibuat dengan role 'Buyer' dulu (bukan langsung Seller)
       const user = await tx.user.create({
         data: {
           email: dto.email,
           password: hashedPassword,
           noTelp: dto.noTelp,
-          role: Role.Buyer, // <-- UBAH KE Buyer
+          role: 'Seller',
         },
       });
 
-      // 2. Buat record toko dengan statusVerif 'Pending'
       const toko = await tx.tokoSeller.create({
         data: {
           userId: user.id,
@@ -54,7 +37,7 @@ export class TokoService {
           noRekening: dto.noRekening,
           fotoKtp: dto.fotoKtp,
           fotoSkck: dto.fotoSkck,
-          statusVerif: StatusVerif.Pending,
+          statusVerif: 'Pending',
         },
       });
 
@@ -85,19 +68,10 @@ export class TokoService {
     const updateToko = await this.prisma.tokoSeller.update({
       where: { id: tokoId },
       data: {
-        statusVerif:
-          status === 'Approved' ? StatusVerif.Approved : StatusVerif.Rejected,
+        statusVerif: status,
         alasanPenolakan: status === 'Rejected' ? alasanPenolakan : null,
       },
     });
-
-    // Jika disetujui (Approved), BARU ubah role user pemiliknya menjadi 'Seller'
-    if (status === 'Approved') {
-      await this.prisma.user.update({
-        where: { id: toko.userId },
-        data: { role: Role.Seller },
-      });
-    }
 
     return {
       message: `Status toko berhasil diubah menjadi ${status}`,
@@ -106,22 +80,23 @@ export class TokoService {
   }
 
   async getMyShopStatus(userId: number) {
-    // Cari toko yang dimiliki oleh user yang sedang login
-    const toko = await this.prisma.tokoSeller.findFirst({
-      where: { userId: userId },
-      orderBy: { id: 'desc' }, // Ambil data pengajuan terbaru kalau misal ada double
-    });
-
-    if (!toko) {
-      // Kalau ternyata user ini belum pernah daftar toko sama sekali
+    if (!userId) {
       return { statusVerif: null };
     }
 
-    // Kembalikan ID toko dan statusnya buat dibaca frontend
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { userId },
+    });
+
+    if (!toko) {
+      return { statusVerif: null };
+    }
+
     return {
-      id: toko.id,
-      statusVerif: toko.statusVerif,
+      tokoId: toko.id,
       namaToko: toko.namaToko,
+      statusVerif: toko.statusVerif,
+      alasanPenolakan: toko.alasanPenolakan,
     };
   }
 
@@ -130,10 +105,7 @@ export class TokoService {
       where: { id: tokoId },
       include: {
         user: {
-          select: {
-            email: true,
-            fotoProfil: true,
-          },
+          select: { email: true },
         },
       },
     });
@@ -142,24 +114,18 @@ export class TokoService {
       throw new BadRequestException('Toko tidak ditemukan!');
     }
 
-    // Mengambil fotoToko secara aman menggunakan indeks string agar lolos ESLint & TS
-    const fotoTokoVal = (toko as Record<string, unknown>)['fotoToko'] as
-      string | undefined;
-
     return {
-      id: toko.id,
       namaToko: toko.namaToko,
-      noToko: toko.noTelp || '',
+      noToko: toko.noTelp,
       kota: toko.kota,
-      email: toko.user?.email || '',
-      fotoToko: fotoTokoVal || toko.user?.fotoProfil || '',
-      statusVerif: toko.statusVerif,
+      email: toko.user.email,
+      fotoToko: toko.fotoToko,
     };
   }
 
   async updateTokoDetail(
     tokoId: number,
-    data: {
+    dto: {
       namaToko?: string;
       noToko?: string;
       kota?: string;
@@ -175,48 +141,51 @@ export class TokoService {
       throw new BadRequestException('Toko tidak ditemukan!');
     }
 
-    return await this.prisma.$transaction(async (tx) => {
-      const updateData: {
-        namaToko?: string;
-        noTelp?: string;
-        kota?: string;
-        [key: string]: unknown;
-      } = {
-        namaToko: data.namaToko,
-        noTelp: data.noToko,
-        kota: data.kota,
-      };
-
-      if (data.fotoToko) {
-        updateData['fotoToko'] = data.fotoToko;
-      }
-
-      const updatedToko = await tx.tokoSeller.update({
-        where: { id: tokoId },
-        data: updateData,
-      });
-
-      // 2. Update Email di User jika ada perubahan
-      if (data.email) {
-        await tx.user.update({
-          where: { id: toko.userId },
-          data: { email: data.email },
-        });
-      }
-
-      return updatedToko;
+    const updatedToko = await this.prisma.tokoSeller.update({
+      where: { id: tokoId },
+      data: {
+        namaToko: dto.namaToko,
+        noTelp: dto.noToko,
+        kota: dto.kota,
+        fotoToko: dto.fotoToko,
+      },
     });
+
+    if (dto.email) {
+      await this.prisma.user.update({
+        where: { id: toko.userId },
+        data: { email: dto.email },
+      });
+    }
+
+    return {
+      message: 'Informasi toko berhasil diperbarui',
+      toko: updatedToko,
+    };
   }
 
   async getTokoByUserId(userId: number) {
-    const toko = await this.prisma.tokoSeller.findFirst({
+    const toko = await this.prisma.tokoSeller.findUnique({
       where: { userId },
+      include: {
+        user: {
+          select: { email: true },
+        },
+      },
     });
 
     if (!toko) {
-      throw new NotFoundException('Toko untuk user ini tidak ditemukan');
+      throw new BadRequestException('Toko tidak ditemukan untuk user ini!');
     }
 
-    return toko;
+    return {
+      tokoId: toko.id,
+      namaToko: toko.namaToko,
+      noToko: toko.noTelp,
+      kota: toko.kota,
+      email: toko.user.email,
+      fotoToko: toko.fotoToko,
+      statusVerif: toko.statusVerif,
+    };
   }
 }
