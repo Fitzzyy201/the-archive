@@ -23,8 +23,8 @@ const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 export const BUYER_NAV_ITEMS = [
   { href: "/", icon: Home, label: "BERANDA" },
-  { href: "/notifikasi", icon: Bell, label: "NOTIFICATION" },
-  { href: "/profile", icon: User, label: "PROFILE" },
+  { href: "/notifikasi-buyer", icon: Bell, label: "NOTIFICATION" },
+  { href: "/profile-buyer", icon: User, label: "PROFILE" },
 ];
 
 interface NavbarProps {
