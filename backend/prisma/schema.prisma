@@ -7,7 +7,255 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role{
+model User {
+  id                Int                @id @default(autoincrement()) @map("id_user")
+  nama              String?            @db.VarChar(100)
+  email             String             @unique @db.VarChar(100)
+  password          String             @db.VarChar(255)
+  role              Role               @default(Buyer)
+  username          String?            @unique
+  statusAkun        StatusAkun         @default(Aktif) @map("status_akun")
+  noTelp            String             @map("no_telp") @db.VarChar(20)
+  fotoProfil        String?            @map("foto_profil") @db.VarChar(255)
+  otpCode           String?
+  otpExpires        DateTime?
+  alamatPengiriman  AlamatPengiriman[]
+  cart              Cart[]
+  komplainDitangani Komplain[]         @relation("AdminKomplain")
+  logKeuangan       LogKeuangan[]
+  notifikasi        Notifikasi[]
+  tokoDiverifikasi  TokoSeller[]       @relation("AdminPemeriksa")
+  toko              TokoSeller?        @relation("PemilikToko")
+  transaksiBuyer    Transaksi[]        @relation("BuyerTransaksi")
+  ulasanDiberikan   Ulasan[]           @relation("BuyerUlasan")
+
+  @@map("user")
+}
+
+model TokoSeller {
+  id              Int         @id @default(autoincrement()) @map("id_toko")
+  userId          Int         @unique @map("id_user")
+  diperiksaOleh   Int?        @map("diperiksa_oleh")
+  namaToko        String      @map("nama_toko") @db.VarChar(100)
+  fotoToko        String?     @map("foto_toko") @db.LongText
+  kota            String      @db.VarChar(100)
+  noTelp          String?     @map("no_telp") @db.VarChar(20)
+  noRekening      String      @map("no_rekening") @db.VarChar(50)
+  fotoKtp         String?     @map("foto_ktp") @db.LongText
+  fotoSkck        String?     @map("foto_skck") @db.LongText
+  statusVerif     StatusVerif @default(Pending) @map("status_verif")
+  alasanPenolakan String?     @map("alasan_penolakan") @db.Text
+  saldoToko       Int         @default(0) @map("saldo_toko")
+  produk          Produk[]
+  admin           User?       @relation("AdminPemeriksa", fields: [diperiksaOleh], references: [id])
+  user            User        @relation("PemilikToko", fields: [userId], references: [id])
+  transaksi       Transaksi[]
+
+  @@index([diperiksaOleh], map: "toko_seller_diperiksa_oleh_fkey")
+  @@map("toko_seller")
+}
+
+model Produk {
+  id              Int               @id @default(autoincrement()) @map("id_produk")
+  tokoId          Int               @map("id_toko")
+  kategoriId      Int?              @map("id_kategori")
+  namaProduk      String            @map("nama_produk") @db.VarChar(150)
+  deskripsi       String            @db.Text
+  harga           Int
+  stok            Int
+  ukuranDimensi   String            @map("ukuran_dimensi") @db.VarChar(50)
+  fotoProduk      String            @map("foto_produk") @db.LongText
+  defect          Boolean           @default(false)
+  statusProduk    StatusProduk      @default(Aktif) @map("status_produk")
+  cart            Cart[]
+  kategori        Kategori?         @relation(fields: [kategoriId], references: [id])
+  toko            TokoSeller        @relation(fields: [tokoId], references: [id])
+  transaksiDetail TransaksiDetail[]
+  ulasan          Ulasan[]
+
+  @@index([kategoriId])
+  @@index([tokoId], map: "produk_id_toko_fkey")
+  @@fulltext([namaProduk, deskripsi])
+  @@map("produk")
+}
+
+model AlamatPengiriman {
+  id            Int     @id @default(autoincrement()) @map("id_alamat")
+  userId        Int     @map("id_user")
+  namaPenerima  String  @map("nama_penerima") @db.VarChar(100)
+  kotaPenerima  String  @map("kota_penerima") @db.VarChar(100)
+  alamatLengkap String  @map("alamat_lengkap") @db.Text
+  catatanKurir  String? @map("catatan_kurir") @db.Text
+  user          User    @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "alamat_pengiriman_id_user_fkey")
+  @@map("alamat_pengiriman")
+}
+
+model Cart {
+  id       Int    @id @default(autoincrement()) @map("id_cart")
+  produkId Int    @map("id_produk")
+  userId   Int    @map("id_user")
+  qty      Int
+  produk   Produk @relation(fields: [produkId], references: [id])
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@index([produkId], map: "cart_id_produk_fkey")
+  @@index([userId], map: "cart_id_user_fkey")
+  @@map("cart")
+}
+
+model Transaksi {
+  id                  Int               @id @default(autoincrement()) @map("id_transaksi")
+  buyerId             Int               @map("id_buyer")
+  tokoId              Int               @map("id_toko")
+  totalHarga          Int               @map("total_harga")
+  statusPesanan       StatusPesanan     @default(PENDING) @map("status_pesanan")
+  resi                String?           @map("resi")
+  alasanReject        String?           @map("alasan_reject")
+  midtransOrderId     String?           @unique @map("midtrans_order_id")
+  midtransToken       String?           @map("midtrans_token")
+  midtransStatus      String?           @map("midtrans_status")
+  paymentType         String?           @map("payment_type")
+  vaNumber            String?           @map("va_number")
+  expiredAt           DateTime?         @map("expired_at")
+  settledAt           DateTime?         @map("settled_at")
+  waktuTransaksi      DateTime          @default(now()) @map("waktu_transaksi")
+  batasWaktuTransaksi DateTime?         @map("batas_waktu_transaksi")
+  batasWaktuKomplain  DateTime?         @map("batas_waktu_komplain")
+  komplain            Komplain?
+  logKeuangan         LogKeuangan[]
+  history             OrderHistory[]
+  shippingResi        ShippingResi?
+  buyer               User              @relation("BuyerTransaksi", fields: [buyerId], references: [id])
+  toko                TokoSeller        @relation(fields: [tokoId], references: [id])
+  detail              TransaksiDetail[]
+
+  @@index([midtransOrderId])
+  @@index([statusPesanan, buyerId])
+  @@index([buyerId], map: "transaksi_id_buyer_fkey")
+  @@index([tokoId], map: "transaksi_id_toko_fkey")
+  @@map("transaksi")
+}
+
+model TransaksiDetail {
+  id          Int       @id @default(autoincrement()) @map("id_detail")
+  transaksiId Int       @map("id_transaksi")
+  produkId    Int       @map("id_produk")
+  qty         Int
+  hargaSatuan Int       @map("harga_satuan")
+  subtotal    Int
+  produk      Produk    @relation(fields: [produkId], references: [id])
+  transaksi   Transaksi @relation(fields: [transaksiId], references: [id])
+
+  @@index([produkId], map: "transaksi_detail_id_produk_fkey")
+  @@index([transaksiId], map: "transaksi_detail_id_transaksi_fkey")
+  @@map("transaksi_detail")
+}
+
+model Komplain {
+  id             Int            @id @default(autoincrement()) @map("id_komplain")
+  transaksiId    Int            @unique @map("id_transaksi")
+  ditanganiOleh  Int?           @map("ditangani_oleh")
+  alasanKomplain String         @map("alasan_komplain") @db.Text
+  fotoVideoBukti String         @map("foto_video_bukti") @db.VarChar(255)
+  statusKomplain StatusKomplain @default(Menunggu) @map("status_komplain")
+  keputusanAdmin String?        @map("keputusan_admin") @db.Text
+  admin          User?          @relation("AdminKomplain", fields: [ditanganiOleh], references: [id])
+  transaksi      Transaksi      @relation(fields: [transaksiId], references: [id])
+
+  @@index([ditanganiOleh], map: "komplain_ditangani_oleh_fkey")
+  @@map("komplain")
+}
+
+model LogKeuangan {
+  id             Int            @id @default(autoincrement()) @map("id_log")
+  transaksiId    Int?           @map("id_transaksi")
+  userId         Int            @map("id_user")
+  jenisTransaksi JenisTransaksi @map("jenis_transaksi")
+  nominal        Int
+  waktuLog       DateTime       @default(now()) @map("waktu_log")
+  transaksi      Transaksi?     @relation(fields: [transaksiId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+
+  @@index([transaksiId], map: "log_keuangan_id_transaksi_fkey")
+  @@index([userId], map: "log_keuangan_id_user_fkey")
+  @@map("log_keuangan")
+}
+
+model Ulasan {
+  id        Int      @id @default(autoincrement()) @map("id_ulasan")
+  buyerId   Int      @map("id_buyer")
+  produkId  Int      @map("id_produk")
+  rating    Int
+  komentar  String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  buyer     User     @relation("BuyerUlasan", fields: [buyerId], references: [id])
+  produk    Produk   @relation(fields: [produkId], references: [id])
+
+  @@index([buyerId], map: "ulasan_id_buyer_fkey")
+  @@index([produkId], map: "ulasan_id_produk_fkey")
+  @@map("ulasan")
+}
+
+model ShippingResi {
+  id          Int       @id @default(autoincrement()) @map("id_resi")
+  transaksiId Int       @unique @map("id_transaksi")
+  nomorResi   String    @map("nomor_resi") @db.VarChar(100)
+  ekspedisi   String    @db.VarChar(100)
+  buktiResi   String?   @map("bukti_resi") @db.Text
+  waktuKirim  DateTime  @default(now()) @map("waktu_kirim")
+  transaksi   Transaksi @relation(fields: [transaksiId], references: [id])
+
+  @@map("shipping_resi")
+}
+
+model OrderHistory {
+  id            Int           @id @default(autoincrement()) @map("id_history")
+  transaksiId   Int           @map("id_transaksi")
+  statusSebelum StatusPesanan @map("status_sebelum")
+  statusSesudah StatusPesanan @map("status_sesudah")
+  catatan       String?       @db.Text
+  dibuatOleh    Int           @map("dibuat_oleh")
+  waktuUbah     DateTime      @default(now()) @map("waktu_ubah")
+  transaksi     Transaksi     @relation(fields: [transaksiId], references: [id])
+
+  @@index([transaksiId], map: "order_history_id_transaksi_fkey")
+  @@map("order_history")
+}
+
+model Kategori {
+  id           Int      @id @default(autoincrement()) @map("id_kategori")
+  namaKategori String   @unique @map("nama_kategori") @db.VarChar(100)
+  slug         String   @unique @db.VarChar(120)
+  deskripsi    String?  @db.Text
+  fotoKategori String?  @db.LongText
+  isActive     Boolean  @default(true) @map("is_active")
+  urutan       Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  produk       Produk[]
+
+  @@map("kategori")
+}
+
+model Notifikasi {
+  id        Int      @id @default(autoincrement()) @map("id_notifikasi")
+  userId    Int      @map("id_user")
+  tipe      String   @db.VarChar(50)
+  title     String   @db.VarChar(200)
+  message   String   @db.Text
+  link      String?  @db.VarChar(500)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifikasi")
+}
+
+enum Role {
   Admin
   Buyer
   Seller
@@ -50,258 +298,4 @@ enum JenisTransaksi {
   FeeAdmin
   RefundBuyer
   WithdrawAdmin
-}
-
-model User {
-  id          Int        @id @default(autoincrement()) @map("id_user")
-  nama        String?    @db.VarChar(100)
-  email       String     @unique @db.VarChar(100)
-  password    String     @db.VarChar(255)
-  role        Role       @default(Buyer)
-  username    String?    @unique
-  statusAkun  StatusAkun @default(Aktif) @map("status_akun")
-  noTelp      String     @map("no_telp") @db.VarChar(20)
-  fotoProfil  String?    @map("foto_profil") @db.VarChar(255)
-  otpCode     String?    
-  otpExpires  DateTime?
-
-  toko             TokoSeller?       @relation("PemilikToko")
-  tokoDiverifikasi TokoSeller[]      @relation("AdminPemeriksa")
-  alamatPengiriman AlamatPengiriman[]
-  cart             Cart[]
-  transaksiBuyer   Transaksi[]       @relation("BuyerTransaksi")
-  komplainDitangani Komplain[]       @relation("AdminKomplain")
-  logKeuangan      LogKeuangan[]
-  ulasanDiberikan Ulasan[] @relation("BuyerUlasan")
-  notifikasi       Notifikasi[]
-
-  @@map("user")
-}
-
-model TokoSeller {
-  id              Int         @id @default(autoincrement()) @map("id_toko")
-  userId          Int         @unique @map("id_user")
-  diperiksaOleh   Int?        @map("diperiksa_oleh")
-  namaToko        String      @map("nama_toko") @db.VarChar(100)
-  fotoToko        String?     @map("foto_toko") @db.LongText
-  kota            String      @db.VarChar(100)
-  noTelp          String?     @map("no_telp") @db.VarChar(20)
-  noRekening      String      @map("no_rekening") @db.VarChar(50)
-  fotoKtp         String?     @map("foto_ktp") @db.LongText
-  fotoSkck        String?     @map("foto_skck") @db.LongText
-  statusVerif     StatusVerif @default(Pending) @map("status_verif")
-  alasanPenolakan String?     @map("alasan_penolakan") @db.Text
-  saldoToko       Int         @default(0) @map("saldo_toko")
-
-  // Relasi
-  user      User      @relation("PemilikToko", fields: [userId], references: [id])
-  admin     User?     @relation("AdminPemeriksa", fields: [diperiksaOleh], references: [id])
-  produk    Produk[]
-  transaksi Transaksi[]
-
-  @@map("toko_seller")
-}
-
-model Produk {
-  id            Int          @id @default(autoincrement()) @map("id_produk")
-  tokoId        Int          @map("id_toko")
-  kategoriId    Int?         @map("id_kategori")
-  namaProduk    String       @map("nama_produk") @db.VarChar(150)
-  deskripsi     String       @db.Text
-  harga         Int
-  stok          Int
-  ukuranDimensi String       @map("ukuran_dimensi") @db.VarChar(50)
-  fotoProduk    String       @map("foto_produk") @db.LongText
-  defect        Boolean      @default(false)
-  statusProduk  StatusProduk @default(Aktif) @map("status_produk")
-
-  // Relasi
-  toko       TokoSeller  @relation(fields: [tokoId], references: [id])
-  kategori   Kategori?   @relation(fields: [kategoriId], references: [id])
-  cart       Cart[]
-  ulasan     Ulasan[]
-  transaksiDetail TransaksiDetail[]
-
-  @@index([kategoriId])
-  @@fulltext([namaProduk, deskripsi])
-  @@map("produk")
-}
-
-model AlamatPengiriman {
-  id            Int    @id @default(autoincrement()) @map("id_alamat")
-  userId        Int    @map("id_user")
-  namaPenerima  String @map("nama_penerima") @db.VarChar(100)
-  kotaPenerima  String @map("kota_penerima") @db.VarChar(100)
-  alamatLengkap String @map("alamat_lengkap") @db.Text
-  catatanKurir  String? @map("catatan_kurir") @db.Text
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@map("alamat_pengiriman")
-}
-
-model Cart {
-  id       Int @id @default(autoincrement()) @map("id_cart")
-  produkId Int @map("id_produk")
-  userId   Int @map("id_user")
-  qty      Int
-
-  produk Produk @relation(fields: [produkId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@map("cart")
-}
-
-model Transaksi {
-  id                  Int           @id @default(autoincrement()) @map("id_transaksi")
-  buyerId             Int           @map("id_buyer")
-  tokoId              Int           @map("id_toko")
-  totalHarga          Int           @map("total_harga")
-  statusPesanan       StatusPesanan @default(PENDING) @map("status_pesanan")
-  resi                String?       @map("resi")
-  alasanReject        String?       @map("alasan_reject")
-  
-  // Midtrans fields
-  midtransOrderId     String?       @unique @map("midtrans_order_id")
-  midtransToken       String?       @map("midtrans_token")
-  midtransStatus      String?       @map("midtrans_status")
-  paymentType         String?       @map("payment_type")
-  vaNumber            String?       @map("va_number")
-  expiredAt           DateTime?     @map("expired_at")
-  settledAt           DateTime?     @map("settled_at")
-  
-  waktuTransaksi      DateTime      @default(now()) @map("waktu_transaksi")
-  batasWaktuTransaksi DateTime?     @map("batas_waktu_transaksi")
-  batasWaktuKomplain  DateTime?     @map("batas_waktu_komplain")
-
-  // Relasi
-  buyer       User              @relation("BuyerTransaksi", fields: [buyerId], references: [id])
-  toko        TokoSeller        @relation(fields: [tokoId], references: [id])
-  komplain    Komplain?
-  logKeuangan LogKeuangan[]
-  detail      TransaksiDetail[]
-  shippingResi ShippingResi?
-  history     OrderHistory[]
-
-  @@index([midtransOrderId])
-  @@index([statusPesanan, buyerId])
-  @@map("transaksi")
-}
-
-model TransaksiDetail {
-  id          Int       @id @default(autoincrement()) @map("id_detail")
-  transaksiId Int       @map("id_transaksi")
-  produkId    Int       @map("id_produk")
-  qty         Int
-  hargaSatuan Int       @map("harga_satuan")
-  subtotal    Int
-  
-  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
-  produk    Produk    @relation(fields: [produkId], references: [id])
-  
-  @@map("transaksi_detail")
-}
-
-model Komplain {
-  id              Int            @id @default(autoincrement()) @map("id_komplain")
-  transaksiId     Int            @unique @map("id_transaksi")
-  ditanganiOleh   Int?           @map("ditangani_oleh")
-  alasanKomplain  String         @map("alasan_komplain") @db.Text
-  fotoVideoBukti  String         @map("foto_video_bukti") @db.VarChar(255)
-  statusKomplain  StatusKomplain @default(Menunggu) @map("status_komplain")
-  keputusanAdmin  String?        @map("keputusan_admin") @db.Text
-
-  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
-  admin     User?     @relation("AdminKomplain", fields: [ditanganiOleh], references: [id])
-
-  @@map("komplain")
-}
-
-model LogKeuangan {
-  id            Int            @id @default(autoincrement()) @map("id_log")
-  transaksiId   Int?           @map("id_transaksi")
-  userId        Int            @map("id_user")
-  jenisTransaksi JenisTransaksi @map("jenis_transaksi")
-  nominal       Int
-  waktuLog      DateTime       @default(now()) @map("waktu_log")
-
-  transaksi Transaksi? @relation(fields: [transaksiId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
-
-  @@map("log_keuangan")
-}
-
-model Ulasan {
-  id        Int      @id @default(autoincrement()) @map("id_ulasan")
-  buyerId   Int      @map("id_buyer")
-  produkId  Int      @map("id_produk")
-  rating    Int
-  komentar  String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relasi
-  buyer  User   @relation("BuyerUlasan", fields: [buyerId], references: [id])
-  produk Produk @relation(fields: [produkId], references: [id])
-
-  @@map("ulasan")
-}
-
-model ShippingResi {
-  id            Int      @id @default(autoincrement()) @map("id_resi")
-  transaksiId   Int      @unique @map("id_transaksi")
-  nomorResi     String   @map("nomor_resi") @db.VarChar(100)
-  ekspedisi     String   @db.VarChar(100)
-  buktiResi     String?  @map("bukti_resi") @db.Text
-  waktuKirim    DateTime @default(now()) @map("waktu_kirim")
-
-  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
-
-  @@map("shipping_resi")
-}
-
-model OrderHistory {
-  id            Int           @id @default(autoincrement()) @map("id_history")
-  transaksiId   Int           @map("id_transaksi")
-  statusSebelum StatusPesanan @map("status_sebelum")
-  statusSesudah StatusPesanan @map("status_sesudah")
-  catatan       String?       @db.Text
-  dibuatOleh    Int           @map("dibuat_oleh")
-  waktuUbah     DateTime      @default(now()) @map("waktu_ubah")
-
-  transaksi Transaksi @relation(fields: [transaksiId], references: [id])
-
-  @@map("order_history")
-}
-
-model Kategori {
-  id           Int      @id @default(autoincrement()) @map("id_kategori")
-  namaKategori String   @unique @map("nama_kategori") @db.VarChar(100)
-  slug         String   @unique @db.VarChar(120)
-  deskripsi    String?  @db.Text
-  fotoKategori String?  @db.LongText
-  isActive     Boolean  @default(true) @map("is_active")
-  urutan       Int      @default(0)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  produk Produk[]
-
-  @@map("kategori")
-}
-
-model Notifikasi {
-  id        Int      @id @default(autoincrement()) @map("id_notifikasi")
-  userId    Int      @map("id_user")
-  tipe      String   @db.VarChar(50)
-  title     String   @db.VarChar(200)
-  message   String   @db.Text
-  link      String?  @db.VarChar(500)
-  isRead    Boolean  @default(false) @map("is_read")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@index([userId, isRead])
-  @@index([createdAt])
-  @@map("notifikasi")
 }
