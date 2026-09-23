@@ -10,7 +10,6 @@ const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] }
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-// Struktur disamain sama model Transaksi + Produk di Prisma
 type PaketItem = {
   id: number;
   tokoNama: string;
@@ -74,9 +73,8 @@ export default function MyPacket() {
     <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
       <Navbar />
 
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-8 py-4 border-b">
-        <Link href="/profile-seller">
+        <Link href="/profile-buyer">
           <ArrowLeft className="w-5 h-5 text-black" />
         </Link>
         <h1 className={`${playfair.className} text-lg sm:text-xl font-bold tracking-wide text-black`}>
