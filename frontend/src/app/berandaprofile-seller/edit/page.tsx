@@ -3,27 +3,42 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera } from "lucide-react";
+import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-// Helper convert file ke Base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+const uploadProfilePhoto = async (file: File, token: string): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE}/produk/upload-foto`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
   });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Upload foto gagal: ${error}`);
+  }
+
+  const result = await response.json();
+  return result.url;
 };
 
 export default function EditProfileSeller() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [form, setForm] = useState({
     namaToko: "",
@@ -36,13 +51,32 @@ export default function EditProfileSeller() {
   const [fotoBaru, setFotoBaru] = useState<File | null>(null);
 
   useEffect(() => {
-    queueMicrotask(async () => {
+    const loadTokoData = async () => {
       const token = localStorage.getItem("token");
-      const tokoId = localStorage.getItem("tokoId");
+      let tokoId = localStorage.getItem("tokoId");
 
-      if (token && tokoId) {
-        try {
-          const res = await fetch(`http://localhost:3001/toko/${tokoId}`, {
+      if (!token) {
+        setIsLoading(false);
+        router.push("/login");
+        return;
+      }
+
+      try {
+        if (!tokoId) {
+          const statusRes = await fetch(`${API_BASE}/toko/status-my-shop`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            if (statusData.tokoId) {
+              tokoId = String(statusData.tokoId);
+              localStorage.setItem("tokoId", tokoId);
+            }
+          }
+        }
+
+        if (tokoId) {
+          const res = await fetch(`${API_BASE}/toko/${tokoId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -50,28 +84,48 @@ export default function EditProfileSeller() {
             const data = await res.json();
             setForm({
               namaToko: data.namaToko || "THE DIARIES STORE",
-              noToko: data.noToko || "+62 812 3456 7890",
-              kota: data.kota || "JAKARTA",
-              email: data.email || "hello@thediaries.com",
+              noToko: data.noToko || "",
+              kota: data.kota || "",
+              email: data.email || "",
             });
             if (data.fotoToko) setFotoPreview(data.fotoToko);
           }
-        } catch (err) {
-          console.error("Gagal ambil data toko:", err);
-        } finally {
-          setIsLoading(false);
         }
-      } else {
+      } catch (err) {
+        console.error("Gagal ambil data toko:", err);
+      } finally {
         setIsLoading(false);
       }
-    });
-  }, []);
+    };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    loadTokoData();
+  }, [router]);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        alert("Sesi tidak valid. Silakan login ulang.");
+        router.push("/login");
+        return;
+      }
+
       setFotoBaru(file);
       setFotoPreview(URL.createObjectURL(file));
+      
+      // Auto upload photo
+      setUploadingPhoto(true);
+      try {
+        const url = await uploadProfilePhoto(file, token);
+        setFotoPreview(url);
+      } catch (err) {
+        console.error("Upload foto gagal:", err);
+        alert("Gagal upload foto. Silakan coba lagi.");
+      } finally {
+        setUploadingPhoto(false);
+      }
     }
   };
 
@@ -81,11 +135,30 @@ export default function EditProfileSeller() {
 
     try {
       const token = localStorage.getItem("token");
-      const tokoId = localStorage.getItem("tokoId");
+      let tokoId = localStorage.getItem("tokoId");
 
-      let finalFoto = fotoPreview;
-      if (fotoBaru) {
-        finalFoto = await fileToBase64(fotoBaru);
+      if (!token) {
+        alert("Sesi tidak valid. Silakan login ulang.");
+        router.push("/login");
+        return;
+      }
+
+      if (!tokoId) {
+        const statusRes = await fetch(`${API_BASE}/toko/status-my-shop`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData.tokoId) {
+            tokoId = String(statusData.tokoId);
+            localStorage.setItem("tokoId", tokoId);
+          }
+        }
+      }
+
+      if (!tokoId) {
+        alert("Toko ID tidak ditemukan.");
+        return;
       }
 
       const payload = {
@@ -93,10 +166,10 @@ export default function EditProfileSeller() {
         noToko: form.noToko,
         kota: form.kota,
         email: form.email,
-        fotoToko: finalFoto,
+        fotoToko: fotoPreview,
       };
 
-      const res = await fetch(`http://localhost:3001/toko/${tokoId}`, {
+      const res = await fetch(`${API_BASE}/toko/${tokoId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -105,17 +178,16 @@ export default function EditProfileSeller() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok || res.status === 200) {
+      if (res.ok) {
         alert("Informasi Toko berhasil diperbarui!");
         router.push("/berandaprofile-seller");
       } else {
-        // Fallback jika backend endpoint update toko belum siap sepenuhnya
-        alert("Gagal memperbarui informasi toko");
+        const errorData = await res.json().catch(() => ({ message: "Unknown error" }));
+        alert(`Gagal memperbarui: ${errorData.message || "Terjadi kesalahan"}`);
       }
     } catch (err) {
       console.error("Error submit info toko:", err);
-      alert("Informasi toko berhasil disimpen (Local).");
-      router.push("/profile-seller");
+      alert("Terjadi kesalahan koneksi ke server.");
     } finally {
       setIsSubmitting(false);
     }
@@ -152,17 +224,18 @@ export default function EditProfileSeller() {
             <div className="w-36 h-36 rounded-full border border-black flex flex-col items-center justify-center bg-[#EAEAEA] overflow-hidden">
               {fotoPreview ? (
                 <img 
-                  src={
-                    fotoPreview.startsWith("http") || fotoPreview.startsWith("data:") || fotoPreview.startsWith("blob:")
-                      ? fotoPreview
-                      : `http://localhost:3001/uploads/${fotoPreview}`
-                      } 
+                  src={getProductImageUrl(fotoPreview)} 
                   alt="Profile Toko" 
                   className="w-full h-full object-cover" 
                 />
               ) : (
                 <div className="flex flex-col items-center text-black/40">
                   <Camera className="w-8 h-8 mb-1" strokeWidth={1.5} />
+                </div>
+              )}
+              {uploadingPhoto && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                  <Loader2 className="w-8 h-8 animate-spin text-white" />
                 </div>
               )}
             </div>

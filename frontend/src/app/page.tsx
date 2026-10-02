@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Store,
   Sparkles,
+  ShoppingBag,
+  Loader2,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
@@ -290,34 +292,69 @@ function EmptyState() {
 
 function ProdukCard({ produk }: { produk: BackendProduk }) {
   const displayImage = getProductImageUrl(produk.fotoProduk);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      if (confirm("Anda perlu login untuk menambahkan produk ke keranjang. Ke halaman login?")) {
+        window.location.href = "/login";
+      }
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const res = await fetch("http://localhost:3001/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ produkId: produk.id, qty: 1 }),
+      });
+
+      if (res.ok) {
+        alert(`"${produk.namaProduk}" berhasil ditambahkan ke keranjang!`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.message || "Gagal menambahkan produk ke keranjang.");
+      }
+    } catch (err) {
+      console.error("Gagal tambah ke cart:", err);
+      alert("Terjadi kesalahan saat menghubungi server.");
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
-    <Link
-      href={`/produk/${produk.id}`}
-      className="group bg-white border border-black/10 rounded-sm overflow-hidden hover:border-black/30 hover:shadow-md transition-all duration-300 flex flex-col"
-    >
-      <div className="relative aspect-square bg-black/5 overflow-hidden">
-        <img
-          src={displayImage}
-          alt={produk.namaProduk}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <span
-          className={`${mono.className} absolute top-2.5 left-2.5 bg-black/90 text-white text-[9px] tracking-[0.1em] px-2 py-1 rounded-sm`}
-        >
-          STOCK: {produk.stok}
-        </span>
-        {produk.defect && (
+    <div className="group bg-white border border-black/10 rounded-sm overflow-hidden hover:border-black/30 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+      <div>
+        <div className="relative aspect-square bg-black/5 overflow-hidden">
+          <img
+            src={displayImage}
+            alt={produk.namaProduk}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
           <span
-            className={`${mono.className} absolute top-2.5 right-2.5 bg-amber-600/90 text-white text-[8px] tracking-[0.1em] px-1.5 py-0.5 rounded-sm`}
+            className={`${mono.className} absolute top-2.5 left-2.5 bg-black/90 text-white text-[9px] tracking-[0.1em] px-2 py-1 rounded-sm`}
           >
-            DEFECT
+            STOCK: {produk.stok}
           </span>
-        )}
-      </div>
+          {produk.defect && (
+            <span
+              className={`${mono.className} absolute top-2.5 right-2.5 bg-amber-600/90 text-white text-[8px] tracking-[0.1em] px-1.5 py-0.5 rounded-sm`}
+            >
+              DEFECT
+            </span>
+          )}
+        </div>
 
-      <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between">
-        <div>
+        <div className="p-3.5 sm:p-4 pb-2">
           <p
             className={`${playfair.className} text-sm font-semibold text-black leading-snug mb-1 line-clamp-1 group-hover:text-black/80`}
           >
@@ -331,13 +368,27 @@ function ProdukCard({ produk }: { produk: BackendProduk }) {
               </span>
             )}
           </p>
-        </div>
-
-        <div className="pt-2 border-t border-black/5 flex items-center justify-between text-[10px] text-black/50">
-          <span className="truncate">{produk.toko?.namaToko || "The Archive"}</span>
-          <span className="italic shrink-0 ml-1">{produk.toko?.kota || "ID"}</span>
+          <div className="flex items-center justify-between text-[10px] text-black/50">
+            <span className="truncate">{produk.toko?.namaToko || "The Archive"}</span>
+            <span className="italic shrink-0 ml-1">{produk.toko?.kota || "ID"}</span>
+          </div>
         </div>
       </div>
-    </Link>
+
+      <div className="p-3.5 sm:p-4 pt-0">
+        <button
+          onClick={handleAddToCart}
+          disabled={isAdding || produk.stok < 1}
+          className={`${mono.className} w-full mt-2 flex items-center justify-center gap-1.5 text-[10px] tracking-wider font-semibold py-2 px-3 border border-black text-black hover:bg-black hover:text-white transition rounded-sm disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          {isAdding ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <ShoppingBag className="w-3.5 h-3.5" />
+          )}
+          {produk.stok < 1 ? "STOK HABIS" : "+ KERANJANG"}
+        </button>
+      </div>
+    </div>
   );
 }

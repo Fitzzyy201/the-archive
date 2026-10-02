@@ -85,11 +85,13 @@ export default function ProfileSellerPage() {
   const email = profile?.email || "";
 
   const phone =
+    (profile as any)?.noTelp ||
     profile?.no_hp ||
     profile?.phone ||
     "";
 
   const foto =
+    (profile as any)?.fotoProfil ||
     profile?.foto ||
     profile?.foto_profil ||
     profile?.profile_picture ||

@@ -1,7 +1,8 @@
-import { Get, Param, Body, Controller, Post } from '@nestjs/common';
+import { Get, Param, Body, Controller, Post, UseGuards, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -14,6 +15,18 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getMyProfile(@Headers('authorization') authHeader: string) {
+    const token = authHeader.split(' ')[1];
+    const payloadBase64 = token.split('.')[1];
+    const decodedPayload = JSON.parse(
+      Buffer.from(payloadBase64, 'base64').toString('utf-8'),
+    ) as { id?: number; sub?: number };
+    const userId = Number(decodedPayload.id ?? decodedPayload.sub);
+    return this.authService.getProfile(userId);
   }
 
   @Get('me/:id')

@@ -6,9 +6,13 @@ import {
   Post,
   Get,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { TokoService } from './toko.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('toko')
 export class TokoController {
@@ -32,6 +36,7 @@ export class TokoController {
   }
 
   @Get('status-my-shop')
+  @UseGuards(JwtAuthGuard)
   async getMyShopStatus(@Headers('authorization') authHeader?: string) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return { statusVerif: null };
@@ -55,11 +60,14 @@ export class TokoController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getTokoDetail(@Param('id') id: string) {
     return this.tokoService.getTokoDetail(+id);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Seller')
   async updateTokoDetail(
     @Param('id') id: string,
     @Body()
@@ -75,6 +83,8 @@ export class TokoController {
   }
 
   @Get('user/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Seller')
   async getTokoByUserId(@Param('userId') userId: string) {
     return this.tokoService.getTokoByUserId(+userId);
   }

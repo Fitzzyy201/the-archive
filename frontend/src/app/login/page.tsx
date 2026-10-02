@@ -51,6 +51,8 @@ export default function LoginPage() {
         if (userObj) localStorage.setItem("user", JSON.stringify(userObj));
         if (userId) localStorage.setItem("userId", String(userId));
         if (role) localStorage.setItem("role", role);
+        const tokoId = data.tokoId || data.user?.tokoId;
+        if (tokoId) localStorage.setItem("tokoId", String(tokoId));
 
         // Hapus key bekas lama jika ada
         localStorage.removeItem("userRole");

@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Package, ShoppingBag, User, PackageSearch, LogOut } from "lucide-react";
+import { Home, Package, ShoppingBag, User, PackageSearch, LogOut, AlertCircle } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 type Produk = {
   id: number;
@@ -28,56 +30,94 @@ export default function BerandaSeller() {
   const router = useRouter();
   const [products, setProducts] = useState<Produk[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tokoStatus, setTokoStatus] = useState<"Approved" | "Pending" | "Rejected" | null>(null);
 
   useEffect(() => {
-  const loadDataSeller = async () => {
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    // Cek key role/userRole
-    const role = localStorage.getItem("role") || localStorage.getItem("userRole");
-    let tokoId = localStorage.getItem("tokoId");
+    const loadDataSeller = async () => {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      const role = localStorage.getItem("role") || localStorage.getItem("userRole");
+      let tokoId = localStorage.getItem("tokoId");
 
-    // Wajib ada TOKEN dan ROLE harus 'Seller'
-    if (!token || role !== "Seller") {
-      setIsLoading(false);
-      router.push("/");
-      return;
-    }
+      // 1. Wajib ada TOKEN
+      if (!token) {
+        setIsLoading(false);
+        router.push("/login");
+        return;
+      }
 
-    try {
-      // 1. Jika tokoId belum ada di localStorage, ambil dulu data toko berdasarkan userId
-      if (!tokoId || tokoId === "undefined") {
-        const tokoRes = await fetch(`http://localhost:3001/toko/user/${userId}`, {
+      try {
+        // 2. Verifikasi status toko via backend (source of truth)
+        const statusRes = await fetch(`${API_BASE}/toko/status-my-shop`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (tokoRes.ok) {
-          const tokoData = await tokoRes.json();
-          tokoId = tokoData.id;
-          if (tokoId) localStorage.setItem("tokoId", String(tokoId));
+        if (!statusRes.ok) {
+          throw new Error("Gagal memverifikasi status toko");
         }
-      }
 
-      // 2. Fetch daftar produk jika tokoId sudah didapatkan
-      if (tokoId) {
-        const res = await fetch(`http://localhost:3001/produk/toko/${tokoId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const statusData = await statusRes.json();
 
-        if (res.ok) {
-          const data = await res.json();
-          setProducts(data);
+        // 3. Jika toko belum approved, redirect ke halaman utama dengan notifikasi
+        if (statusData.statusVerif !== "Approved") {
+          setTokoStatus(statusData.statusVerif);
+          // Update localStorage role ke Buyer jika bukan Seller
+          if (role === "Seller") {
+            localStorage.setItem("role", "Buyer");
+          }
+          setIsLoading(false);
+          router.push("/");
+          return;
         }
-      }
-    } catch (err) {
-      console.error("Gagal mengambil data beranda seller:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  loadDataSeller();
-}, [router]);
+        // 4. Toko approved - update localStorage
+        localStorage.setItem("role", "Seller");
+        const foundTokoId = statusData.tokoId || statusData.id;
+        if (foundTokoId) {
+          localStorage.setItem("tokoId", String(foundTokoId));
+          tokoId = String(foundTokoId);
+        }
+
+        // 5. Jika tokoId belum ada di localStorage, ambil dari userId
+        if (!tokoId || tokoId === "undefined") {
+          if (userId) {
+            const tokoRes = await fetch(`${API_BASE}/toko/user/${userId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (tokoRes.ok) {
+              const tokoData = await tokoRes.json();
+              tokoId = tokoData.id;
+              if (tokoId) localStorage.setItem("tokoId", String(tokoId));
+            }
+          }
+        }
+
+        // 6. Fetch daftar produk jika tokoId sudah didapatkan
+        if (tokoId) {
+          const res = await fetch(`${API_BASE}/produk/toko/${tokoId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            setProducts(data);
+          } else {
+            throw new Error("Gagal mengambil data produk");
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data beranda seller:", err);
+        setError("Gagal memuat data toko. Silakan login ulang.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDataSeller();
+  }, [router]);
+
   const handleLogout = () => {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
       localStorage.removeItem("token");
@@ -87,6 +127,120 @@ export default function BerandaSeller() {
       window.location.href = "/";
     }
   };
+
+  // Render pending/rejected state
+  if (tokoStatus === "Pending" || tokoStatus === "Rejected") {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
+        <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-between md:w-56 md:py-8 py-3">
+          <div className="flex md:flex-col items-center justify-around md:justify-start md:items-stretch w-full md:gap-2">
+            <NavItem href="/" icon={<Home className="w-5 h-5" />} label="BERANDA" />
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:w-full text-red-500 hover:text-red-400"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-[10px] md:text-sm font-medium">LOGOUT</span>
+          </button>
+        </div>
+
+        <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+          <div className="flex-1 w-full px-5 sm:px-10 md:px-16 py-16 flex items-center justify-center">
+            <div className="w-full max-w-md text-center">
+              {tokoStatus === "Pending" ? (
+                <div className="bg-amber-50/80 border border-amber-200 p-6 rounded-sm">
+                  <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" />
+                  <h2 className={`${playfair.className} text-xl font-bold text-amber-950 mb-2`}>
+                    PENGAJUAN TOKO SEDANG DIPROSES
+                  </h2>
+                  <p className="text-amber-800/80 leading-relaxed">
+                    Toko Anda sedang diverifikasi oleh tim kurasi kami. Silakan tunggu hingga status berubah menjadi <strong>Approved</strong> untuk mengakses dashboard seller.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-red-50/80 border border-red-200 p-6 rounded-sm">
+                  <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                  <h2 className={`${playfair.className} text-xl font-bold text-red-950 mb-2`}>
+                    PENGAJUAN TOKO DITOLAK
+                  </h2>
+                  <p className="text-red-800/80 leading-relaxed">
+                    Pengajuan toko Anda ditolak. Silakan hubungi admin untuk informasi lebih lanjut atau daftarkan ulang toko dengan data yang benar.
+                  </p>
+                </div>
+              )}
+              <Link
+                href="/"
+                className="mt-6 inline-block bg-black text-white text-xs font-semibold tracking-wider uppercase px-6 py-3 rounded-sm hover:bg-black/85 transition"
+              >
+                KEMBALI KE BERANDA
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
+        <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-between md:w-56 md:py-8 py-3">
+          <div className="flex md:flex-col items-center justify-around md:justify-start md:items-stretch w-full md:gap-2">
+            <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
+            <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
+            <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
+            <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:w-full text-red-500 hover:text-red-400"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-[10px] md:text-sm font-medium">LOGOUT</span>
+          </button>
+        </div>
+        <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+          <div className="flex-1 w-full flex items-center justify-center">
+            <p className="text-xs text-black/40 animate-pulse font-mono tracking-widest uppercase">Memuat Dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
+        <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-between md:w-56 md:py-8 py-3">
+          <div className="flex md:flex-col items-center justify-around md:justify-start md:items-stretch w-full md:gap-2">
+            <NavItem href="/" icon={<Home className="w-5 h-5" />} label="BERANDA" />
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:w-full text-red-500 hover:text-red-400"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-[10px] md:text-sm font-medium">LOGOUT</span>
+          </button>
+        </div>
+        <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+          <div className="flex-1 w-full px-5 sm:px-10 md:px-16 py-16 flex items-center justify-center">
+            <div className="w-full max-w-md text-center bg-red-50 border border-red-200 p-6 rounded-sm">
+              <AlertCircle className="w-10 h-10 text-red-600 mx-auto mb-3" />
+              <p className="text-red-800">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 bg-black text-white text-xs font-semibold px-4 py-2 rounded-sm hover:bg-black/85 transition"
+              >
+                COBA LAGI
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
@@ -113,17 +267,13 @@ export default function BerandaSeller() {
       <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
         <div className="px-5 sm:px-10 py-6 border-b border-black/10 bg-white">
           <h1 className={`${playfair.className} text-2xl sm:text-3xl font-semibold tracking-tight text-black`}>
-            THE DIARIES STORE
+            {products.length > 0 ? "KOLLEKSI PRODUK" : "THE DIARIES STORE"}
           </h1>
         </div>
 
         <div className="flex-1 w-full px-5 sm:px-10 md:px-16 py-8">
           <div className="w-full md:max-w-2xl mx-auto">
-            {isLoading ? (
-              <div className="py-10 text-center text-xs text-black/40 animate-pulse">
-                Memuat ringkasan toko...
-              </div>
-            ) : products.length === 0 ? (
+            {products.length === 0 ? (
               <div className="flex flex-col items-center text-center py-16 px-6">
                 <div className="relative w-16 h-16 flex items-center justify-center mb-6">
                   <div className="absolute inset-0 border border-black/15 rotate-45" />

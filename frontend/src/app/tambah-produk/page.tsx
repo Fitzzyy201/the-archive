@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessageCircle, Plus, Upload, Loader2 } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { ArrowLeft, MessageCircle, Plus, Upload, Loader2, AlertCircle } from "lucide-react";
+import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -11,6 +12,7 @@ const playfair = Playfair_Display({
 });
 
 const inter = Inter({ subsets: ["latin"] });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 const DEFECT_OPTIONS = ["Stain", "Warna Pudar", "Robek", "Lainnya"];
 
@@ -49,6 +51,51 @@ export default function TambahProduk() {
   const [slides, setSlides] = useState<Slide[]>([emptySlide()]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [tokoApproved, setTokoApproved] = useState(false);
+
+  // Verify toko status on mount
+  useEffect(() => {
+    const verifyToko = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setIsLoading(false);
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/toko/status-my-shop`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          throw new Error("Gagal memverifikasi status toko");
+        }
+
+        const data = await res.json();
+
+        if (data.tokoId) {
+          localStorage.setItem("tokoId", String(data.tokoId));
+        }
+
+        if (data.statusVerif !== "Approved") {
+          setIsLoading(false);
+          // Don't redirect here, let the render handle it
+          return;
+        }
+
+        setTokoApproved(true);
+      } catch (err) {
+        console.error("Gagal verifikasi toko:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifyToko();
+  }, [router]);
 
   const updateSlide = (index: number, patch: Partial<Slide>) => {
     setSlides((prev) =>
@@ -103,12 +150,29 @@ export default function TambahProduk() {
 
   const handlePublish = async () => {
     const token = localStorage.getItem("token");
-    const tokoId = localStorage.getItem("tokoId");
+    let tokoId = localStorage.getItem("tokoId");
 
     if (!token) {
       alert("Anda belum login. Silakan login terlebih dahulu.");
       router.push("/login");
       return;
+    }
+
+    if (!tokoId) {
+      try {
+        const res = await fetch(`${API_BASE}/toko/status-my-shop`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tokoId) {
+            tokoId = String(data.tokoId);
+            localStorage.setItem("tokoId", tokoId);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal ambil tokoId:", err);
+      }
     }
 
     if (!tokoId) {
@@ -222,54 +286,85 @@ export default function TambahProduk() {
         </button>
       </div>
 
-      <div className="flex-1 w-full px-4 sm:px-8 md:px-16 py-6 md:flex md:justify-center">
-        <div className="w-full md:max-w-xl space-y-6">
-          {slides.map((slide, index) => (
-            <SlideCard
-              key={index}
-              index={index}
-              slide={slide}
-              onChange={(patch) => updateSlide(index, patch)}
-              onToggleDefect={(option) => toggleDefect(index, option)}
-            />
-          ))}
-
-          <button
-            onClick={addSlide}
-            disabled={isPublishing}
-            className="w-full border-2 border-dashed border-gray-300 rounded-md py-5 flex flex-col items-center justify-center gap-1 text-gray-500 hover:border-black hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="flex items-center gap-1 text-sm font-medium">
-              <Plus className="w-4 h-4" />
-              ADD ANOTHER SLIDE
-            </span>
-
-            <span className="text-xs text-gray-400">(Max 10 Slide)</span>
-          </button>
-
-          {uploadProgress && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{uploadProgress}</span>
-            </div>
-          )}
-
-          <button
-            onClick={handlePublish}
-            disabled={isPublishing || slides.length === 0}
-            className="w-full bg-black text-white rounded-md py-3.5 font-medium tracking-wide hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                MENYIMPAN...
-              </>
-            ) : (
-              "PUBLISH PRODUK"
-            )}
-          </button>
+      {isLoading && (
+        <div className="flex-1 w-full flex items-center justify-center">
+          <p className={`${mono.className} text-xs tracking-widest text-black/40 animate-pulse uppercase`}>
+            Memverifikasi Status Toko...
+          </p>
         </div>
-      </div>
+      )}
+
+      {!isLoading && !tokoApproved && (
+        <div className="flex-1 w-full flex items-center justify-center px-4">
+          <div className="w-full max-w-md text-center bg-amber-50 border border-amber-200 p-8 rounded-sm">
+            <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" />
+            <h2 className={`${playfair.className} text-xl font-bold text-amber-950 mb-2`}>
+              TOKO BELUM DISETUJUI
+            </h2>
+            <p className="text-amber-800/80 leading-relaxed mb-6">
+              Anda hanya bisa menambah produk setelah toko disetujui (Approved) oleh admin.
+              Status saat ini: <strong>Pending Verifikasi</strong>
+            </p>
+            <Link
+              href="/beranda-seller"
+              className="inline-block bg-black text-white text-xs font-semibold tracking-wider uppercase px-6 py-3 rounded-sm hover:bg-black/85 transition"
+            >
+              KE DASHBOARD SELLER
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && tokoApproved && (
+        <div className="flex-1 w-full px-4 sm:px-8 md:px-16 py-6 md:flex md:justify-center">
+          <div className="w-full md:max-w-xl space-y-6">
+            {slides.map((slide, index) => (
+              <SlideCard
+                key={index}
+                index={index}
+                slide={slide}
+                onChange={(patch) => updateSlide(index, patch)}
+                onToggleDefect={(option) => toggleDefect(index, option)}
+              />
+            ))}
+
+            <button
+              onClick={addSlide}
+              disabled={isPublishing}
+              className="w-full border-2 border-dashed border-gray-300 rounded-md py-5 flex flex-col items-center justify-center gap-1 text-gray-500 hover:border-black hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="flex items-center gap-1 text-sm font-medium">
+                <Plus className="w-4 h-4" />
+                ADD ANOTHER SLIDE
+              </span>
+
+              <span className="text-xs text-gray-400">(Max 10 Slide)</span>
+            </button>
+
+            {uploadProgress && (
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{uploadProgress}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handlePublish}
+              disabled={isPublishing || slides.length === 0}
+              className="w-full bg-black text-white rounded-md py-3.5 font-medium tracking-wide hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  MENYIMPAN...
+                </>
+              ) : (
+                "PUBLISH PRODUK"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

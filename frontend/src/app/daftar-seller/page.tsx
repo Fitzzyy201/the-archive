@@ -121,6 +121,8 @@ const DAFTAR_KOTA = [
   "Yogyakarta",
 ];
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 export default function RegistrasiSeller() {
   const [shopName, setShopName] = useState("");
   const [email, setEmail] = useState("");
@@ -132,7 +134,7 @@ export default function RegistrasiSeller() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [ktpFile, setKtpFile] = useState<File | null>(null);
-  const [npwpFile, setNpwpFile] = useState<File | null>(null);
+  const [skckFile, setSkckFile] = useState<File | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -163,6 +165,24 @@ export default function RegistrasiSeller() {
   const passwordStrength = getPasswordStrength(password);
   const router = useRouter();
 
+  const uploadFile = async (file: File, entity: "ktp" | "skck"): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_BASE}/upload/${entity}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Upload ${entity.toUpperCase()} gagal: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.url;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -176,10 +196,38 @@ export default function RegistrasiSeller() {
       return;
     }
 
+    if (!nik || nik.length !== 16) {
+      alert("NIK harus 16 digit angka.");
+      return;
+    }
+
+    if (!npwp) {
+      alert("NPWP wajib diisi.");
+      return;
+    }
+
+    if (!ktpFile) {
+      alert("Foto KTP wajib diupload.");
+      return;
+    }
+
+    if (!skckFile) {
+      alert("Foto SKCK wajib diupload.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/toko/register-seller", {
+      // 1. Upload KTP
+      setIsLoading(true);
+      const fotoKtpUrl = await uploadFile(ktpFile, "ktp");
+
+      // 2. Upload SKCK
+      const fotoSkckUrl = await uploadFile(skckFile, "skck");
+
+      // 3. Register seller
+      const response = await fetch(`${API_BASE}/toko/register-seller`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,9 +238,11 @@ export default function RegistrasiSeller() {
           namaToko: shopName,
           kota: city,
           noRekening: bankAccount,
-          deskripsi: `Toko berlokasi di ${city}. NIK: ${nik}`,
-          alamat: `${city} (No. Rek: ${bankAccount})`,
           noTelp: phone,
+          nik: nik,
+          npwp: npwp,
+          fotoKtp: fotoKtpUrl,
+          fotoSkck: fotoSkckUrl,
         }),
       });
 
@@ -209,7 +259,7 @@ export default function RegistrasiSeller() {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal terhubung ke backend! Pastikan server NestJS aktif.");
+      alert(error instanceof Error ? error.message : "Gagal terhubung ke backend! Pastikan server NestJS aktif.");
     } finally {
       setIsLoading(false);
     }
@@ -441,7 +491,7 @@ export default function RegistrasiSeller() {
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <UploadBox label="Upload Foto KTP" file={ktpFile} onChange={setKtpFile} />
-                  <UploadBox label="Upload Foto NPWP" file={npwpFile} onChange={setNpwpFile} />
+                  <UploadBox label="Upload Foto SKCK" file={skckFile} onChange={setSkckFile} />
                 </div>
               </div>
 

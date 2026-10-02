@@ -68,6 +68,9 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: {
+        toko: true,
+      },
     });
 
     if (!user) {
@@ -97,10 +100,13 @@ export class AuthService {
       access_token: token,
       id: user.id,
       role: user.role,
+      tokoId: user.toko?.id || null,
+      statusVerif: user.toko?.statusVerif || null,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
+        tokoId: user.toko?.id || null,
       },
     };
   }

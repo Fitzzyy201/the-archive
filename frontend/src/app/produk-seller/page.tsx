@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Package, ShoppingBag, User, Plus, PackageSearch, Trash2, X, Eye } from "lucide-react";
+import { Home, Package, ShoppingBag, User, Plus, PackageSearch, Trash2, X, Eye, AlertCircle } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // Tipe data di-update biar mencakup deskripsi, dimensi, dan defect
 type Produk = {
@@ -32,39 +34,85 @@ export default function ProdukSeller() {
   const router = useRouter();
   const [products, setProducts] = useState<Produk[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [tokoApproved, setTokoApproved] = useState(false);
   
   // State buat nyimpen data produk yang mau dilihat detailnya (Read More)
   const [selectedProduct, setSelectedProduct] = useState<Produk | null>(null);
 
   const fetchProducts = async () => {
     const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
     // Cek key role/userRole (sama seperti di beranda-seller)
     const role = localStorage.getItem("role") || localStorage.getItem("userRole");
-    const tokoId = localStorage.getItem("tokoId");
+    let tokoId = localStorage.getItem("tokoId");
 
-    if (role !== "Seller") {
-      router.push("/");
+    if (!token) {
+      setIsLoading(false);
+      router.push("/login");
       return;
     }
 
-    if (token && tokoId) {
-      try {
-        const res = await fetch(`http://localhost:3001/produk/toko/${tokoId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    try {
+      // 1. Verifikasi status toko via backend (source of truth)
+      const statusRes = await fetch(`${API_BASE}/toko/status-my-shop`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!statusRes.ok) {
+        throw new Error("Gagal memverifikasi status toko");
+      }
+
+      const statusData = await statusRes.json();
+
+      // 2. Jika toko belum approved, redirect ke halaman utama
+      if (statusData.statusVerif !== "Approved") {
+        if (role === "Seller") {
+          localStorage.setItem("role", "Buyer");
+        }
+        setIsLoading(false);
+        router.push("/");
+        return;
+      }
+
+      // 3. Toko approved - update localStorage
+      localStorage.setItem("role", "Seller");
+      const foundTokoId = statusData.tokoId || statusData.id;
+      if (foundTokoId) {
+        localStorage.setItem("tokoId", String(foundTokoId));
+        tokoId = String(foundTokoId);
+      }
+
+      // 4. Jika tokoId belum ada di localStorage, ambil dari userId
+      if (!tokoId || tokoId === "undefined") {
+        if (userId) {
+          const tokoRes = await fetch(`${API_BASE}/toko/user/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (tokoRes.ok) {
+            const tokoData = await tokoRes.json();
+            tokoId = tokoData.id;
+            if (tokoId) localStorage.setItem("tokoId", String(tokoId));
+          }
+        }
+      }
+
+      // 5. Fetch daftar produk jika tokoId sudah didapatkan
+      if (tokoId) {
+        const res = await fetch(`${API_BASE}/produk/toko/${tokoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
+        } else {
+          throw new Error("Gagal mengambil data produk");
         }
-      } catch (err) {
-        console.error("Gagal mengambil data produk:", err);
-      } finally {
-        setIsLoading(false);
       }
-    } else {
+    } catch (err) {
+      console.error("Gagal mengambil data produk:", err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -77,8 +125,10 @@ export default function ProdukSeller() {
 
   const handleToggleStatus = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:3001/produk/${id}/toggle-status`, {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/produk/${id}/toggle-status`, {
         method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
@@ -95,8 +145,10 @@ export default function ProdukSeller() {
     if (!confirm("Apakah Anda yakin ingin menghapus produk ini secara permanen?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/produk/${id}`, {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/produk/${id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
