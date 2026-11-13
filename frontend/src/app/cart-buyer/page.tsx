@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Trash2, ShoppingBag } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -40,18 +41,31 @@ export default function CartPage() {
 
   useEffect(() => {
     const fetchCart = async () => {
+      const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
-      if (!userId) {
-        setIsLoading(false);
+      if (!token || !userId) {
+        router.replace("/login");
         return;
       }
 
       try {
-        const res = await fetch(`http://localhost:3001/cart/user/${userId}`);
+        const res = await fetch("http://localhost:3001/cart", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const data = await res.json();
-          setCartItems(data);
-          setSelected(data.map((item: CartItem) => item.id));
+          const items: CartItem[] = (data.items ?? []).map((item: any) => ({
+            id: item.id,
+            produkId: item.produkId,
+            namaProduk: item.produk.namaProduk,
+            ukuranDimensi: item.produk.ukuranDimensi,
+            defect: item.produk.defect,
+            harga: item.produk.harga,
+            fotoProduk: item.produk.fotoProduk,
+            qty: item.qty,
+          }));
+          setCartItems(items);
+          setSelected(items.map((item) => item.id));
         }
 
         const resAlamat = await fetch(`http://localhost:3001/alamat/user/${userId}`);
@@ -67,7 +81,7 @@ export default function CartPage() {
     };
 
     fetchCart();
-  }, []);
+  }, [router]);
 
   const toggleSelect = (id: number) => {
     setSelected((prev) =>
@@ -75,9 +89,26 @@ export default function CartPage() {
     );
   };
 
-  const handleRemove = (id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-    setSelected((prev) => prev.filter((s) => s !== id));
+  const handleRemove = async (id: number) => {
+    const item = cartItems.find((cartItem) => cartItem.id === id);
+    if (!item) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:3001/cart/${item.produkId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setCartItems((prev) => prev.filter((cartItem) => cartItem.id !== id));
+        setSelected((prev) => prev.filter((cartItemId) => cartItemId !== id));
+      } else {
+        alert("Gagal menghapus item dari keranjang.");
+      }
+    } catch (err) {
+      console.error("Gagal menghapus item keranjang:", err);
+    }
   };
 
   const selectedItems = cartItems.filter((item) => selected.includes(item.id));
@@ -136,7 +167,7 @@ export default function CartPage() {
                     />
                     <div className="w-16 h-16 bg-gray-100 rounded-sm overflow-hidden shrink-0">
                       <img
-                        src={item.fotoProduk}
+                        src={getProductImageUrl(item.fotoProduk)}
                         alt={item.namaProduk}
                         className="w-full h-full object-cover"
                       />

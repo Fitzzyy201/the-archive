@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { guardAdmin, handleAdminResponse } from "@/utils/adminAuth";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -32,6 +34,7 @@ function formatRupiah(angka: number) {
 }
 
 export default function MonthlyReportPage() {
+  const router = useRouter();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-11
@@ -47,12 +50,17 @@ export default function MonthlyReportPage() {
   });
 
   useEffect(() => {
+    if (!guardAdmin(router)) return;
+
     const fetchReport = async () => {
       setIsLoading(true);
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch(
-          `http://localhost:3001/admin/monthly-report?year=${year}&month=${month + 1}`
+          `http://localhost:3001/admin/monthly-report?year=${year}&month=${month + 1}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
+        if (!handleAdminResponse(res, router)) return;
         if (res.ok) {
           const data = await res.json();
           setReport({
@@ -76,7 +84,7 @@ export default function MonthlyReportPage() {
     };
 
     fetchReport();
-  }, [year, month]);
+  }, [year, month, router]);
 
   const prevMonth = () => {
     if (month === 0) {

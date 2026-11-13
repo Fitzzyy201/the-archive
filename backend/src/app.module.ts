@@ -15,6 +15,9 @@ import { CartModule } from './cart/cart.module';
 import { CheckoutModule } from './checkout/checkout.module';
 import { PaymentModule } from './payment/payment.module';
 import { NotificationModule } from './notification/notification.module';
+import { AlamatModule } from './alamat/alamat.module';
+import { KategoriModule } from './kategori/kategori.module';
+import { UlasanModule } from './ulasan/ulasan.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { NotificationModule } from './notification/notification.module';
     CheckoutModule,
     PaymentModule,
     NotificationModule,
+    AlamatModule,
+    KategoriModule,
+    UlasanModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

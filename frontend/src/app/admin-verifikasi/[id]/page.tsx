@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, IdCard, FileUser } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { guardAdmin, handleAdminResponse } from "@/utils/adminAuth";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -22,13 +24,17 @@ type StoreDetail = {
   email?: string;
 };
 
-function isImageSrc(src: string | null) {
-  return (
-    !!src &&
-    (src.startsWith("data:image") ||
-      src.startsWith("http://") ||
-      src.startsWith("https://"))
-  );
+function resolveDocSrc(src: string | null): string | null {
+  if (!src || !src.trim()) return null;
+
+  const value = src.trim();
+  if (value.startsWith("data:image") || value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  if (value.startsWith("/") || value.startsWith("uploads/")) {
+    return getProductImageUrl(value);
+  }
+  return null;
 }
 
 export default function StoreDetailsPage() {
@@ -42,9 +48,15 @@ export default function StoreDetailsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!guardAdmin(router)) return;
+
     const fetchStore = async () => {
       try {
-        const res = await fetch("http://localhost:3001/admin/pending-sellers");
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3001/admin/pending-sellers", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!handleAdminResponse(res, router)) return;
         if (res.ok) {
           const data: StoreDetail[] = await res.json();
           const found = Array.isArray(data)
@@ -60,7 +72,7 @@ export default function StoreDetailsPage() {
     };
 
     fetchStore();
-  }, [tokoId]);
+  }, [tokoId, router]);
 
   const submitVerifikasi = async (status: "Approved" | "Rejected") => {
     if (status === "Rejected" && !alasan.trim()) {
@@ -70,14 +82,20 @@ export default function StoreDetailsPage() {
 
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:3001/toko/verifikasi/${tokoId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           status,
           ...(status === "Rejected" ? { alasanPenolakan: alasan } : {}),
         }),
       });
+
+      if (!handleAdminResponse(res, router)) return;
 
       if (res.ok) {
         router.push("/admin-verifikasi");
@@ -216,10 +234,12 @@ function DocBox({
   src: string | null;
   icon: React.ReactNode;
 }) {
+  const imageSrc = resolveDocSrc(src);
+
   return (
     <div className="border border-black aspect-[3/4] flex flex-col items-center justify-center overflow-hidden bg-gray-50">
-      {isImageSrc(src) ? (
-        <img src={src as string} alt={label} className="w-full h-full object-cover" />
+      {imageSrc ? (
+        <img src={imageSrc} alt={label} className="w-full h-full object-cover" />
       ) : (
         <>
           {icon}

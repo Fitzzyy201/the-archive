@@ -6,16 +6,21 @@ import {
   BadRequestException,
   Param,
   Get,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiConsumes, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { UploadEntity } from './upload.interface';
+import { getUploadMulterOptions } from './upload.multer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 const VALID_ENTITIES: UploadEntity[] = ['produk', 'resi', 'ktp', 'skck', 'profile', 'komplain'];
 
 @ApiTags('Upload')
 @Controller('upload')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
@@ -29,7 +34,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('produk')))
   async uploadProduk(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'produk');
   }
@@ -44,7 +49,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('resi')))
   async uploadResi(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'resi');
   }
@@ -59,7 +64,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('ktp')))
   async uploadKtp(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'ktp');
   }
@@ -74,7 +79,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('skck')))
   async uploadSkck(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'skck');
   }
@@ -89,7 +94,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('profile')))
   async uploadProfile(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'profile');
   }
@@ -104,7 +109,7 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', getUploadMulterOptions('komplain')))
   async uploadKomplain(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadFile(file, 'komplain');
   }

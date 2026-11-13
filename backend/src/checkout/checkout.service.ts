@@ -10,6 +10,7 @@ import { PaymentService } from '../payment/payment.service';
 import { NotificationService } from '../notification/notification.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import { StatusPesanan } from '@prisma/client';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class CheckoutService {
@@ -219,7 +220,8 @@ export class CheckoutService {
     const isSuccess = this.paymentService.isSuccessfulPayment(parsed.status);
     const isFailed = this.paymentService.isFailedPayment(parsed.status);
 
-    if (transaksi.statusPesanan === newStatus) {
+    // Gunakan midtransStatus untuk cek idempotensi, bukan statusPesanan
+    if (transaksi.midtransStatus === parsed.status) {
       return { message: 'Status sudah sama', transaksiId: transaksi.id };
     }
 
@@ -315,6 +317,7 @@ export class CheckoutService {
     });
   }
 
+  @Cron(CronExpression.EVERY_MINUTE)
   async expirePendingOrders() {
     const now = new Date();
     const expiredOrders = await this.prisma.transaksi.findMany({

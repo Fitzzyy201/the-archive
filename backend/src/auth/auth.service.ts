@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -89,6 +90,13 @@ export class AuthService {
       );
     }
 
+    if (user.statusAkun !== 'Aktif') {
+      throw new HttpException(
+        'Akun Anda sudah dinonaktifkan. Hubungi admin untuk bantuan.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const payload = { sub: user.id, email: user.email, role: user.role };
     const token = await this.jwtService.signAsync(payload);
 
@@ -108,7 +116,13 @@ export class AuthService {
   async getProfile(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true,
+        nama: true,
+        email: true,
+        role: true,
+        noTelp: true,
+        fotoProfil: true,
         toko: true,
       },
     });
@@ -160,7 +174,9 @@ export class AuthService {
           </div>
         `,
       });
-      console.log(`[EMAIL BERHASIL DIKIRIM] Kepada: ${email} | Kode OTP: ${otp}`);
+      console.log(
+        `[EMAIL BERHASIL DIKIRIM] Kepada: ${email} | Kode OTP: ${otp}`,
+      );
     } catch (mailError) {
       console.error('Gagal mengirim email via Nodemailer:', mailError);
       throw new HttpException(
@@ -211,5 +227,25 @@ export class AuthService {
       },
     });
     return { message: 'Password berhasil diubah. Silakan login' };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        nama: dto.nama,
+        noTelp: dto.noTelp,
+        fotoProfil: dto.fotoProfil,
+      },
+      select: {
+        id: true,
+        nama: true,
+        email: true,
+        role: true,
+        noTelp: true,
+        fotoProfil: true,
+        toko: true,
+      },
+    });
   }
 }

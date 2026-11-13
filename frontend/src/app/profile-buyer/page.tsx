@@ -27,9 +27,11 @@ interface SellerProfile {
   name?: string;
   email?: string;
   no_hp?: string;
+  noTelp?: string;
   phone?: string;
   foto?: string;
   foto_profil?: string;
+  fotoProfil?: string;
   profile_picture?: string;
 }
 
@@ -87,11 +89,13 @@ export default function ProfileSellerPage() {
   const phone =
     profile?.no_hp ||
     profile?.phone ||
+    profile?.noTelp ||
     "";
 
   const foto =
     profile?.foto ||
     profile?.foto_profil ||
+    profile?.fotoProfil ||
     profile?.profile_picture ||
     "";
 

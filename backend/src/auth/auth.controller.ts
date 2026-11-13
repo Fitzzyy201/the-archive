@@ -1,8 +1,22 @@
-import { Get, Param, Body, Controller, Post } from '@nestjs/common';
+import {
+  Get,
+  Patch,
+  Param,
+  Body,
+  Controller,
+  Post,
+  Request,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -17,13 +31,38 @@ export class AuthController {
   }
 
   @Get('me/:id')
-  async getProfile(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getProfile(@Request() req, @Param('id') id: string) {
+    const isSelf = Number(id) === req.user.sub;
+    const isAdmin = req.user.role === 'Admin';
+
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException(
+        'Anda hanya dapat mengakses profil Anda sendiri',
+      );
+    }
+
     return this.authService.getProfile(+id);
   }
 
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.authService.forgotPassword(email);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getMyProfile(@Request() req) {
+    return this.authService.getProfile(req.user.sub);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async updateMyProfile(@Request() req, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.sub, dto);
   }
 
   @Post('verify-otp')

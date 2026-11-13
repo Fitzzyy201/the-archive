@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { NotificationService } from './notification.service';
+import { Inject, forwardRef } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
@@ -22,10 +23,11 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   @WebSocketServer()
   server: Server;
 
-  private userSockets: Map<number, Set<string>> = new Map(); // userId -> Set of socketIds
+  private userSockets: Map<number, Set<string>> = new Map();
 
   constructor(
     private readonly jwtService: JwtService,
+    @Inject(forwardRef(() => NotificationService))
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -116,14 +118,16 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   // Method untuk dipanggil dari service lain
   async sendNotificationToUser(userId: number, notification: any) {
+    if (!this.server) return;
+
     this.server.to(`user:${userId}`).emit('notification', notification);
 
-    // Update unread count
     const unreadCount = await this.notificationService.getUnreadCount(userId);
     this.server.to(`user:${userId}`).emit('unreadCount', { count: unreadCount });
   }
 
   async sendNotificationToRole(role: string, notification: any) {
+    if (!this.server) return;
     this.server.to(`role:${role}`).emit('notification', notification);
   }
 

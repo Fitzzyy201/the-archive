@@ -71,7 +71,7 @@ export function mapMidtransStatusToOrderStatus(status: string): string {
   switch (status) {
     case 'capture':
     case 'settlement':
-      return 'PENDING'; // Seller masih perlu accept
+      return 'DIPROSES'; // Berubah dari PENDING ke DIPROSES setelah bayar
     case 'pending':
       return 'PENDING';
     case 'deny':

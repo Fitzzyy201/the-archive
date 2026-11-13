@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
   MessageCircle,
@@ -12,14 +13,21 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { guardAdmin, clearAdminSession, handleAdminResponse } from "@/utils/adminAuth";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-// Data ringkasan — nanti dipasang fetch ke backend
-const overview = {
-  systemStatus: "ACTIVE" as "ACTIVE" | "MAINTENANCE",
+type Overview = {
+  systemStatus: "ACTIVE" | "MAINTENANCE";
+  platformRevenue: number;
+  totalBuyers: number;
+  totalSellers: number;
+};
+
+const defaultOverview: Overview = {
+  systemStatus: "ACTIVE",
   platformRevenue: 0,
   totalBuyers: 0,
   totalSellers: 0,
@@ -33,11 +41,52 @@ const ADMIN_NAV = [
   { href: "/admin-dashboard", icon: Home, label: "OVERVIEW" },
   { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
   { href: "/admin-users", icon: Users, label: "USERS" },
-  { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
+  { href: "/admin-monthly-report", icon: FileText, label: "LAPORAN" },
   { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
 ];
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [overview, setOverview] = useState<Overview>(defaultOverview);
+
+  useEffect(() => {
+    if (!guardAdmin(router)) return;
+
+    const fetchOverview = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3001/admin/dashboard-stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!handleAdminResponse(res, router)) return;
+        if (res.ok) {
+          const data = await res.json();
+          setOverview({
+            systemStatus: data.systemStatus ?? "ACTIVE",
+            platformRevenue: data.platformRevenue ?? 0,
+            totalBuyers: data.totalBuyers ?? 0,
+            totalSellers: data.totalSellers ?? 0,
+          });
+        }
+      } catch (err) {
+        console.warn("Dashboard stats belum bisa diambil:", err);
+      }
+    };
+
+    fetchOverview();
+  }, [router]);
+
+  const handleGenerateReport = () => {
+    router.push("/admin-monthly-report");
+  };
+
+  const handleLogout = () => {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+      clearAdminSession();
+      router.replace("/admin-portal");
+    }
+  };
+
   return (
     <div className={`${inter.className} min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]`}>
       
@@ -74,13 +123,13 @@ export default function AdminDashboard() {
             <button className="p-2 hover:bg-black/5 rounded-sm transition">
               <MessageCircle className="w-5 h-5 text-black" />
             </button>
-            <Link
-              href="/admin-portal"
+            <button
+              onClick={handleLogout}
               className="flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700 transition border border-red-200 px-3 py-1.5 rounded-sm bg-red-50/50"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">LOGOUT</span>
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -135,7 +184,10 @@ export default function AdminDashboard() {
               THE ARCHIVE FINANCIAL PROTOCOL V.1.02
             </p>
 
-            <button className={`${mono.className} w-full bg-black text-white text-xs font-semibold tracking-widest uppercase rounded-sm py-4 hover:bg-black/85 transition`}>
+            <button
+              onClick={handleGenerateReport}
+              className={`${mono.className} w-full bg-black text-white text-xs font-semibold tracking-widest uppercase rounded-sm py-4 hover:bg-black/85 transition`}
+            >
               Generate Monthly Report
             </button>
           </div>

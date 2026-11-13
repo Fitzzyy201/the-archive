@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from './notification.gateway';
 
 export interface CreateNotificationDto {
   userId: number;
@@ -11,10 +12,14 @@ export interface CreateNotificationDto {
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationGateway))
+    private readonly gateway: NotificationGateway,
+  ) {}
 
   async create(dto: CreateNotificationDto) {
-    return this.prisma.notifikasi.create({
+    const notif = await this.prisma.notifikasi.create({
       data: {
         userId: dto.userId,
         tipe: dto.tipe,
@@ -23,6 +28,11 @@ export class NotificationService {
         link: dto.link,
       },
     });
+
+    // Kirim real-time
+    await this.gateway.sendNotificationToUser(dto.userId, notif);
+
+    return notif;
   }
 
   async getUserNotifications(userId: number, unreadOnly = false) {

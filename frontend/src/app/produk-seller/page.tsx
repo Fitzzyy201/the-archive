@@ -77,8 +77,10 @@ export default function ProdukSeller() {
 
   const handleToggleStatus = async (id: number) => {
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:3001/produk/${id}/toggle-status`, {
         method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
@@ -95,8 +97,10 @@ export default function ProdukSeller() {
     if (!confirm("Apakah Anda yakin ingin menghapus produk ini secara permanen?")) return;
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:3001/produk/${id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {

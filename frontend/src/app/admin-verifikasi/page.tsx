@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
   MessageCircle,
@@ -16,6 +16,7 @@ import {
   Store,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { guardAdmin, handleAdminResponse, clearAdminSession } from "@/utils/adminAuth";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -36,11 +37,12 @@ const ADMIN_NAV = [
   { href: "/admin-dashboard", icon: Home, label: "OVERVIEW" },
   { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
   { href: "/admin-users", icon: Users, label: "USERS" },
-  { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
+  { href: "/admin-monthly-report", icon: FileText, label: "LAPORAN" },
   { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
 ];
 
 export default function AdminVerifikasiPage() {
+  const router = useRouter();
   const [sellers, setSellers] = useState<PendingSeller[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,11 @@ export default function AdminVerifikasiPage() {
   const fetchPendingSellers = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:3001/admin/pending-sellers"); // Sesuaikan port backend jika beda
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:3001/admin/pending-sellers", {
+        headers: { Authorization: `Bearer ${token}` },
+      }); // Sesuaikan port backend jika beda
+      if (!handleAdminResponse(res, router)) return;
       if (res.ok) {
         const data = await res.json();
         setSellers(data);
@@ -61,10 +67,19 @@ export default function AdminVerifikasiPage() {
   };
 
   useEffect(() => {
+    if (!guardAdmin(router)) return;
+
     queueMicrotask(() => {
       fetchPendingSellers();
     });
-  }, []);
+  }, [router]);
+
+  const handleLogout = () => {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+      clearAdminSession();
+      router.replace("/admin-portal");
+    }
+  };
 
   const handleVerify = async (tokoId: number, namaToko: string, status: "APPROVED" | "REJECTED") => {
     const aksiText = status === "APPROVED" ? "menyetujui" : "menolak";
@@ -72,11 +87,17 @@ export default function AdminVerifikasiPage() {
     if (!confirm(`Apakah Anda yakin ingin ${aksiText} verifikasi toko "${namaToko}"?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:3001/admin/verify-seller/${tokoId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ status }),
       });
+
+      if (!handleAdminResponse(res, router)) return;
 
       if (res.ok) {
         alert(`Toko "${namaToko}" berhasil di-${status}!`);
@@ -127,13 +148,13 @@ export default function AdminVerifikasiPage() {
             <button className="p-2 hover:bg-black/5 rounded-sm transition">
               <MessageCircle className="w-5 h-5 text-black" />
             </button>
-            <Link
-              href="/admin-portal"
+            <button
+              onClick={handleLogout}
               className="flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700 transition border border-red-200 px-3 py-1.5 rounded-sm bg-red-50/50"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">LOGOUT</span>
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -176,7 +197,13 @@ export default function AdminVerifikasiPage() {
                     </div>
                     <div>
                       <h3 className={`${playfair.className} text-base font-bold text-black mb-1`}>
-                        {seller.namaToko}
+                        <Link
+                          href={`/admin-verifikasi/${seller.id}`}
+                          className="hover:underline underline-offset-4"
+                          title="Lihat detail toko"
+                        >
+                          {seller.namaToko}
+                        </Link>
                       </h3>
                       <p className="text-xs text-black/70 font-medium">
                         Email: <span className="text-black">{seller.user?.email || "-"}</span> | No. Telp: {seller.user?.noTelp || "-"}

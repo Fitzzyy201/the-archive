@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
 import * as bcrypt from 'bcrypt';
@@ -93,6 +93,7 @@ export class TokoService {
     }
 
     return {
+      id: toko.id,
       tokoId: toko.id,
       namaToko: toko.namaToko,
       statusVerif: toko.statusVerif,
@@ -115,11 +116,14 @@ export class TokoService {
     }
 
     return {
+      id: toko.id,
       namaToko: toko.namaToko,
       noToko: toko.noTelp,
       kota: toko.kota,
       email: toko.user.email,
       fotoToko: toko.fotoToko,
+      statusVerif: toko.statusVerif,
+      alasanPenolakan: toko.alasanPenolakan,
     };
   }
 
@@ -132,6 +136,7 @@ export class TokoService {
       email?: string;
       fotoToko?: string;
     },
+    userId: number,
   ) {
     const toko = await this.prisma.tokoSeller.findUnique({
       where: { id: tokoId },
@@ -139,6 +144,10 @@ export class TokoService {
 
     if (!toko) {
       throw new BadRequestException('Toko tidak ditemukan!');
+    }
+
+    if (toko.userId !== userId) {
+      throw new ForbiddenException('Toko ini bukan milik Anda');
     }
 
     const updatedToko = await this.prisma.tokoSeller.update({
@@ -179,6 +188,7 @@ export class TokoService {
     }
 
     return {
+      id: toko.id,
       tokoId: toko.id,
       namaToko: toko.namaToko,
       noToko: toko.noTelp,

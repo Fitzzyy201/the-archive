@@ -6,7 +6,9 @@ import {
   Param,
   Patch,
   Post,
+  Request,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,7 +17,13 @@ import { extname } from 'path';
 import { ProdukService } from './produk.service';
 import { CreateProdukDto } from './dto/create-produk.dto';
 import { UpdateProdukDto } from './dto/update-produk.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { TokoVerifiedGuard } from '../auth/guards/toko-verified.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Produk')
 @Controller('produk')
 export class ProdukController {
   constructor(private readonly produkService: ProdukService) {}
@@ -36,26 +44,40 @@ export class ProdukController {
   }
 
   @Post()
-  async create(@Body() dto: CreateProdukDto) {
-    return this.produkService.create(dto);
+  @UseGuards(JwtAuthGuard, RolesGuard, TokoVerifiedGuard)
+  @Roles('Seller')
+  @ApiBearerAuth()
+  async create(@Request() req, @Body() dto: CreateProdukDto) {
+    return this.produkService.create(dto, req.user.sub);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateProdukDto) {
-    return this.produkService.update(+id, dto);
+  @UseGuards(JwtAuthGuard, RolesGuard, TokoVerifiedGuard)
+  @Roles('Seller')
+  @ApiBearerAuth()
+  async update(@Request() req, @Param('id') id: string, @Body() dto: UpdateProdukDto) {
+    return this.produkService.update(+id, dto, req.user.sub);
   }
 
   @Patch(':id/toggle-status')
-  async toggleStatus(@Param('id') id: string) {
-    return this.produkService.toggleStatus(+id);
+  @UseGuards(JwtAuthGuard, RolesGuard, TokoVerifiedGuard)
+  @Roles('Seller')
+  @ApiBearerAuth()
+  async toggleStatus(@Request() req, @Param('id') id: string) {
+    return this.produkService.toggleStatus(+id, req.user.sub);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.produkService.remove(+id);
+  @UseGuards(JwtAuthGuard, RolesGuard, TokoVerifiedGuard)
+  @Roles('Seller')
+  @ApiBearerAuth()
+  async remove(@Request() req, @Param('id') id: string) {
+    return this.produkService.remove(+id, req.user.sub);
   }
 
   @Post('upload-foto')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

@@ -5,11 +5,18 @@ import {
   Patch,
   Post,
   Get,
-  Headers,
+  Request,
+  UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { TokoService } from './toko.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Toko')
 @Controller('toko')
 export class TokoController {
   constructor(private readonly tokoService: TokoService) {}
@@ -20,6 +27,9 @@ export class TokoController {
   }
 
   @Patch('verifikasi/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin')
+  @ApiBearerAuth()
   async verifikasiToko(
     @Param('id') id: string,
     @Body() body: { status: 'Approved' | 'Rejected'; alasanPenolakan?: string },
@@ -32,26 +42,10 @@ export class TokoController {
   }
 
   @Get('status-my-shop')
-  async getMyShopStatus(@Headers('authorization') authHeader?: string) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return { statusVerif: null };
-    }
-
-    try {
-      const token = authHeader.split(' ')[1];
-
-      const payloadBase64 = token.split('.')[1];
-      const decodedPayload = JSON.parse(
-        Buffer.from(payloadBase64, 'base64').toString('utf-8'),
-      ) as { id?: number; sub?: number };
-
-      const userId = Number(decodedPayload.id ?? decodedPayload.sub);
-
-      return this.tokoService.getMyShopStatus(userId);
-    } catch (error) {
-      console.error('Gagal baca token:', error);
-      return { statusVerif: null };
-    }
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getMyShopStatus(@Request() req) {
+    return this.tokoService.getMyShopStatus(req.user.sub);
   }
 
   @Get(':id')
@@ -60,7 +54,11 @@ export class TokoController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Seller')
+  @ApiBearerAuth()
   async updateTokoDetail(
+    @Request() req,
     @Param('id') id: string,
     @Body()
     body: {
@@ -71,11 +69,16 @@ export class TokoController {
       fotoToko?: string;
     },
   ) {
-    return this.tokoService.updateTokoDetail(+id, body);
+    return this.tokoService.updateTokoDetail(+id, body, req.user.sub);
   }
 
   @Get('user/:userId')
-  async getTokoByUserId(@Param('userId') userId: string) {
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async getTokoByUserId(@Request() req, @Param('userId') userId: string) {
+    if (Number(userId) !== req.user.sub) {
+      throw new ForbiddenException('Anda hanya dapat mengakses toko milik Anda sendiri');
+    }
     return this.tokoService.getTokoByUserId(+userId);
   }
 }

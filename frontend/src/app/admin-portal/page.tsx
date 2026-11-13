@@ -11,7 +11,6 @@ const inter = Inter({ subsets: ["latin"] });
 export default function LoginAdmin() {
   const router = useRouter();
   
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -79,20 +78,6 @@ if (response.ok) {
           </p>
 
           <form onSubmit={handleAdminLogin} className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-2">
-                USERNAME
-              </label>
-              <input
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin_username"
-                className="w-full border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition"
-              />
-            </div>
-
             <div>
               <label className="block text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-2">
                 EMAIL ADDRESS
