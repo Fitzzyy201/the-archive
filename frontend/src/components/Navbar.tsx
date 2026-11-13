@@ -11,6 +11,10 @@ import {
   Bell,
   User,
   LogOut,
+  ShieldCheck,
+  Users,
+  FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
@@ -27,11 +31,33 @@ export const BUYER_NAV_ITEMS = [
   { href: "/profile", icon: User, label: "PROFILE" },
 ];
 
-interface NavbarProps {
-  onSearch?: (query: string) => void;
+export const ADMIN_NAV_ITEMS = [
+  { href: "/admin-dashboard", icon: Home, label: "OVERVIEW" },
+  { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
+  { href: "/admin-users", icon: Users, label: "USERS" },
+  { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
+  { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
+];
+
+const NAV_ALIASES: Record<string, string[]> = {
+  "/admin-dashboard": ["/dashboard-admin"],
+  "/admin-laporan": ["/admin-monthly-report"],
+};
+
+function isNavItemActive(pathname: string, href: string) {
+  if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+
+  return (NAV_ALIASES[href] ?? []).some(
+    (alias) => pathname === alias || pathname.startsWith(`${alias}/`)
+  );
 }
 
-export default function Navbar({ onSearch }: NavbarProps) {
+interface NavbarProps {
+  onSearch?: (query: string) => void;
+  variant?: "buyer" | "admin";
+}
+
+export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -62,6 +88,106 @@ export default function Navbar({ onSearch }: NavbarProps) {
       window.location.href = "/";
     }
   };
+
+  if (variant === "admin") {
+    return (
+      <>
+        {/* ADMIN DESKTOP SIDEBAR (lg and up) */}
+        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 flex-col bg-black text-white">
+          <div className="border-b border-white/10 px-6 pb-6 pt-8">
+            <p
+              className={`${mono.className} text-[9px] uppercase tracking-[0.3em] text-white/50`}
+            >
+              Management
+            </p>
+            <p
+              className={`${playfair.className} mt-2 text-lg font-bold tracking-[0.12em] text-white`}
+            >
+              ADMIN PORTAL
+            </p>
+          </div>
+
+          <nav
+            aria-label="Navigasi admin"
+            className="flex-1 overflow-y-auto py-3"
+          >
+            {ADMIN_NAV_ITEMS.map((item) => {
+              const isActive = isNavItemActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 px-6 py-3 text-[11px] uppercase tracking-[0.18em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
+                    isActive
+                      ? "bg-white/10 font-semibold text-white"
+                      : "text-white/50 hover:bg-white/[0.06] hover:text-white"
+                  }`}
+                >
+                  <item.icon
+                    className="h-[18px] w-[18px] shrink-0"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span
+                      className="ml-auto h-1.5 w-1.5 bg-white"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="border-t border-white/10 px-6 py-5">
+            <p
+              className={`${mono.className} text-[8px] uppercase tracking-[0.22em] text-white/50`}
+            >
+              The Archive / Admin
+            </p>
+          </div>
+        </aside>
+
+        {/* ADMIN MOBILE/TABLET BOTTOM NAVIGATION (below lg) */}
+        <nav
+          aria-label="Navigasi admin"
+          className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] lg:hidden"
+        >
+          <div className="flex h-16 items-stretch">
+            {ADMIN_NAV_ITEMS.map((item) => {
+              const isActive = isNavItemActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-label={item.label}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`relative flex min-w-0 flex-1 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
+                    isActive ? "text-white" : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  <span
+                    className={`absolute inset-x-4 top-0 h-[2px] ${
+                      isActive ? "bg-white" : "bg-transparent"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <item.icon
+                    className="h-5 w-5"
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      </>
+    );
+  }
 
   return (
     <header className={`${inter.className} w-full flex flex-col`}>

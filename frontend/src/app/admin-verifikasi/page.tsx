@@ -2,19 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   LogOut,
   MessageCircle,
-  Home,
   ShieldCheck,
-  Users,
-  FileText,
-  AlertTriangle,
   Check,
   X,
   Store,
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
@@ -31,14 +27,6 @@ type PendingSeller = {
     noTelp: string;
   };
 };
-
-const ADMIN_NAV = [
-  { href: "/admin-dashboard", icon: Home, label: "OVERVIEW" },
-  { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
-  { href: "/admin-users", icon: Users, label: "USERS" },
-  { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
-  { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
-];
 
 export default function AdminVerifikasiPage() {
   const [sellers, setSellers] = useState<PendingSeller[]>([]);
@@ -92,31 +80,11 @@ export default function AdminVerifikasiPage() {
   };
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]`}>
-      
-      {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-64 md:py-8 md:gap-2 py-3 shrink-0">
-        <div className="hidden md:block px-6 mb-6">
-          <p className={`${mono.className} text-[10px] tracking-[0.25em] text-white/40`}>
-            MANAGEMENT
-          </p>
-          <h2 className={`${playfair.className} text-lg font-bold text-white tracking-wider`}>
-            ADMIN PORTAL
-          </h2>
-        </div>
-
-        {ADMIN_NAV.map((item) => (
-          <AdminNavItem
-            key={item.href}
-            href={item.href}
-            icon={<item.icon className="w-5 h-5" />}
-            label={item.label}
-          />
-        ))}
-      </div>
+    <div className={`${inter.className} min-h-screen flex flex-col bg-[#FAF9F6] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}>
+      <Navbar variant="admin" />
 
       {/* Main Content Area */}
-      <div className="order-1 md:order-2 flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0">
         
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 sm:px-10 py-5 bg-white border-b border-black/10">
@@ -210,32 +178,5 @@ export default function AdminVerifikasiPage() {
 
       </div>
     </div>
-  );
-}
-
-function AdminNavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3.5 ${
-        isActive
-          ? "text-white font-semibold bg-white/10 md:border-r-2 md:border-white"
-          : "text-white/40 hover:text-white/70 hover:bg-white/5"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-xs tracking-wider">{label}</span>
-    </Link>
   );
 }

@@ -2,16 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  LogOut,
-  MessageCircle,
-  Home,
-  ShieldCheck,
-  Users,
-  Wallet,
-  AlertTriangle,
-} from "lucide-react";
+import { LogOut, MessageCircle } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
@@ -69,7 +61,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
+    <div
+      className={`${inter.className} min-h-screen flex flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}
+    >
+      <Navbar variant="admin" />
+
       <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b">
         <Link href="/login-admin">
           <LogOut className="w-5 h-5 text-black" />
@@ -153,30 +149,7 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
-
-      <div className="bg-black flex items-center justify-around py-3">
-        <AdminNavItem href="/admin-dashboard" icon={<Home className="w-5 h-5" />} />
-        <AdminNavItem href="/admin-verifikasi" icon={<ShieldCheck className="w-5 h-5" />} />
-        <AdminNavItem href="/admin-users" icon={<Users className="w-5 h-5" />} />
-        <AdminNavItem href="/admin-laporan" icon={<Wallet className="w-5 h-5" />} />
-        <AdminNavItem href="/admin-komplain" icon={<AlertTriangle className="w-5 h-5" />} />
-      </div>
     </div>
   );
 }
 
-function AdminNavItem({ href, icon }: { href: string; icon: React.ReactNode }) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`p-2 rounded-md transition ${
-        isActive ? "text-white" : "text-white/35 hover:text-white/60"
-      }`}
-    >
-      {icon}
-    </Link>
-  );
-}
