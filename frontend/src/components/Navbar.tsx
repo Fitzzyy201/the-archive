@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Users,
   FileText,
+  Wallet,
   AlertTriangle,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
@@ -35,6 +36,7 @@ export const ADMIN_NAV_ITEMS = [
   { href: "/admin-dashboard", icon: Home, label: "OVERVIEW" },
   { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
   { href: "/admin-users", icon: Users, label: "USERS" },
+  { href: "/admin-finance", icon: Wallet, label: "FINANCE" },
   { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
   { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
 ];
@@ -83,7 +85,7 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
       localStorage.removeItem("userId");
       localStorage.removeItem("userRole");
       localStorage.removeItem("tokoId");
-      
+
       // Refresh total ke halaman utama
       window.location.href = "/";
     }
@@ -93,52 +95,67 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
     return (
       <>
         {/* ADMIN DESKTOP SIDEBAR (lg and up) */}
-        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 flex-col bg-black text-white">
-          <div className="border-b border-white/10 px-6 pb-6 pt-8">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-black text-white lg:flex">
+          <div className="border-b border-white/10 px-6 pb-7 pt-8">
             <p
-              className={`${mono.className} text-[9px] uppercase tracking-[0.3em] text-white/50`}
+              className={`${mono.className} text-[8px] uppercase tracking-[0.32em] text-white/45`}
             >
               Management
             </p>
             <p
-              className={`${playfair.className} mt-2 text-lg font-bold tracking-[0.12em] text-white`}
+              className={`${playfair.className} mt-2.5 text-xl font-bold leading-none tracking-[0.1em] text-white`}
             >
               ADMIN PORTAL
             </p>
+            <span className="mt-5 block h-px w-10 bg-white/25" aria-hidden="true" />
           </div>
 
           <nav
             aria-label="Navigasi admin"
-            className="flex-1 overflow-y-auto py-3"
+            className="flex-1 overflow-y-auto px-3 py-4"
           >
-            {ADMIN_NAV_ITEMS.map((item) => {
-              const isActive = isNavItemActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`flex items-center gap-3 px-6 py-3 text-[11px] uppercase tracking-[0.18em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
-                    isActive
-                      ? "bg-white/10 font-semibold text-white"
-                      : "text-white/50 hover:bg-white/[0.06] hover:text-white"
-                  }`}
-                >
-                  <item.icon
-                    className="h-[18px] w-[18px] shrink-0"
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
-                  <span>{item.label}</span>
-                  {isActive && (
+            <p
+              className={`${mono.className} mb-2 px-3 text-[8px] uppercase tracking-[0.24em] text-white/30`}
+            >
+              Workspace
+            </p>
+
+            <div className="space-y-1">
+              {ADMIN_NAV_ITEMS.map((item) => {
+                const isActive = isNavItemActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`group relative flex items-center gap-3 px-3 py-3 text-[10px] uppercase tracking-[0.16em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
+                      isActive
+                        ? "bg-white/10 font-semibold text-white"
+                        : "text-white/50 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
                     <span
-                      className="ml-auto h-1.5 w-1.5 bg-white"
+                      aria-hidden="true"
+                      className={`absolute inset-y-2 left-0 w-[2px] transition-colors ${
+                        isActive ? "bg-white" : "bg-transparent"
+                      }`}
+                    />
+                    <item.icon
+                      className="h-[18px] w-[18px] shrink-0"
+                      strokeWidth={1.75}
                       aria-hidden="true"
                     />
-                  )}
-                </Link>
-              );
-            })}
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {isActive && (
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 bg-white"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
 
           <div className="border-t border-white/10 px-6 py-5">
@@ -146,6 +163,11 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
               className={`${mono.className} text-[8px] uppercase tracking-[0.22em] text-white/50`}
             >
               The Archive / Admin
+            </p>
+            <p
+              className={`${mono.className} mt-1.5 text-[7px] uppercase tracking-[0.18em] text-white/25`}
+            >
+              Management Console
             </p>
           </div>
         </aside>
@@ -165,20 +187,27 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
                   aria-label={item.label}
                   aria-current={isActive ? "page" : undefined}
                   className={`relative flex min-w-0 flex-1 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${
-                    isActive ? "text-white" : "text-white/50 hover:text-white"
+                    isActive ? "text-white" : "text-white/40 hover:text-white/75"
                   }`}
                 >
                   <span
-                    className={`absolute inset-x-4 top-0 h-[2px] ${
+                    aria-hidden="true"
+                    className={`absolute inset-x-3 top-0 h-[2px] transition-colors ${
                       isActive ? "bg-white" : "bg-transparent"
                     }`}
-                    aria-hidden="true"
                   />
-                  <item.icon
-                    className="h-5 w-5"
-                    strokeWidth={1.75}
+                  <span
                     aria-hidden="true"
-                  />
+                    className={`flex h-9 w-9 items-center justify-center transition-colors ${
+                      isActive ? "bg-white/10" : ""
+                    }`}
+                  >
+                    <item.icon
+                      className="h-5 w-5"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  </span>
                   <span className="sr-only">{item.label}</span>
                 </Link>
               );
@@ -190,41 +219,49 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
   }
 
   return (
-    <header className={`${inter.className} w-full flex flex-col`}>
+    <header className={`${inter.className} flex w-full flex-col`}>
       {/* 1. TOP ARCHIVAL ANNOUNCEMENT RIBBON */}
-      <div className="w-full bg-[#F5F2EB] border-b border-black/10 text-black/60 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase py-2 px-4 sm:px-8 flex justify-between items-center font-mono select-none">
-        <span className="hidden md:inline-block">
-          THE ARCHIVE · VOL. 01 / 2024
-        </span>
-        <span className="mx-auto md:mx-0 tracking-[0.25em] font-medium text-black/70">
-          CURATED ARCHIVE & TIMELESS GOODS
-        </span>
-        <span className="hidden lg:inline-block text-black/40">
-          WORLDWIDE CURATION · IDR
-        </span>
+      <div className="w-full select-none border-b border-black/10 bg-[#F5F2EB] text-black/60">
+        <div
+          className={`${mono.className} mx-auto grid max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-2 text-[9px] uppercase tracking-[0.2em] sm:px-8 sm:text-[10px] lg:px-10 xl:px-12`}
+        >
+          <span className="hidden truncate md:block">
+            THE ARCHIVE · VOL. 01 / 2024
+          </span>
+          <span className="truncate text-center font-medium tracking-[0.25em] text-black/70">
+            CURATED ARCHIVE & TIMELESS GOODS
+          </span>
+          <span className="hidden truncate text-right text-black/40 lg:block">
+            WORLDWIDE CURATION · IDR
+          </span>
+        </div>
       </div>
 
       {/* 2. DESKTOP TOP HORIZONTAL NAVBAR (Hidden on Mobile) */}
-      <div className="hidden md:block sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-black/10 transition-all">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-4 flex items-center justify-between gap-6">
-          
+      <div className="sticky top-0 z-40 hidden border-b border-black/10 bg-white/95 backdrop-blur-md transition-all md:block">
+        <div className="mx-auto max-w-[1440px] px-5 py-4 sm:px-6 lg:px-8 xl:px-12">
+          <div className="flex items-center justify-between gap-4 lg:gap-5">
           {/* Left: Navigation Menu */}
-          <nav className="flex items-center gap-7">
+          <nav
+            aria-label="Navigasi utama"
+            className="flex items-center gap-4 lg:gap-7"
+          >
             {BUYER_NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`group relative text-[11px] tracking-[0.2em] font-medium transition-colors uppercase py-1 ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={`group relative whitespace-nowrap py-1 text-[10px] font-medium uppercase tracking-[0.18em] transition-colors lg:text-[11px] lg:tracking-[0.2em] ${
                     isActive
-                      ? "text-black font-semibold"
+                      ? "font-semibold text-black"
                       : "text-black/50 hover:text-black"
                   }`}
                 >
                   {item.label}
                   <span
-                    className={`absolute left-0 -bottom-1 h-[1.5px] bg-black transition-all duration-300 ${
+                    className={`absolute -bottom-1 left-0 h-[1.5px] bg-black transition-all duration-300 ${
                       isActive ? "w-full" : "w-0 group-hover:w-full"
                     }`}
                   />
@@ -234,15 +271,15 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
           </nav>
 
           {/* Center: Brand Masthead (Vintage Editorial Centerpiece) */}
-          <div className="text-center shrink-0">
-            <Link href="/" className="inline-flex flex-col items-center group">
+          <div className="shrink-0 text-center">
+            <Link href="/" className="group inline-flex flex-col items-center">
               <span
-                className={`${playfair.className} text-2xl lg:text-3xl font-bold tracking-tight text-black group-hover:opacity-85 transition leading-none`}
+                className={`${playfair.className} text-lg font-bold leading-none tracking-tight text-black transition group-hover:opacity-85 lg:text-2xl xl:text-3xl`}
               >
                 The Archive
               </span>
               <span
-                className={`${mono.className} text-[8px] tracking-[0.35em] text-black/40 uppercase mt-1 group-hover:text-black/60 transition`}
+                className={`${mono.className} mt-1 text-[7px] uppercase tracking-[0.32em] text-black/40 transition group-hover:text-black/60 lg:text-[8px]`}
               >
                 Curated Selection
               </span>
@@ -250,23 +287,24 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
           </div>
 
           {/* Right: Search & Action Utilities */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 lg:gap-3">
             {/* Search Input Box */}
-            <div className="relative flex items-center border border-black/15 hover:border-black/40 focus-within:border-black rounded-sm px-3 py-1.5 bg-[#FAF9F6] transition w-44 lg:w-56">
-              <Search className="w-3.5 h-3.5 text-black/40 mr-2 shrink-0" />
+            <div className="relative hidden w-32 items-center rounded-sm border border-black/15 bg-[#FAF9F6] px-3 py-1.5 transition hover:border-black/40 focus-within:border-black lg:flex lg:w-40 xl:w-56">
+              <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-black/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder="SEARCH CATALOGUE..."
-                className={`${mono.className} w-full text-[10px] tracking-[0.08em] placeholder:text-black/30 outline-none bg-transparent text-black uppercase`}
+                aria-label="Cari katalog"
+                className={`${mono.className} w-full min-w-0 bg-transparent text-[10px] uppercase tracking-[0.08em] text-black outline-none placeholder:text-black/30`}
               />
             </div>
 
             {/* Buka Toko Button */}
             <Link
               href="/daftar-seller"
-              className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] border border-black/20 hover:border-black hover:bg-black hover:text-white rounded-sm px-3.5 py-2 transition text-black whitespace-nowrap`}
+              className={`${mono.className} hidden whitespace-nowrap rounded-sm border border-black/20 px-3 py-1.5 text-[9px] font-semibold tracking-[0.14em] text-black transition hover:border-black hover:bg-black hover:text-white lg:inline-flex lg:px-3.5 lg:py-2 lg:text-[10px]`}
             >
               BUKA TOKO
             </Link>
@@ -275,24 +313,25 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
             {!isLoggedIn ? (
               <Link
                 href="/login"
-                className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] bg-black text-white rounded-sm px-4 py-2 hover:bg-black/85 transition whitespace-nowrap`}
+                className={`${mono.className} whitespace-nowrap rounded-sm bg-black px-3 py-1.5 text-[9px] font-semibold tracking-[0.14em] text-white transition hover:bg-black/85 lg:px-4 lg:py-2 lg:text-[10px]`}
               >
                 LOGIN
               </Link>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 lg:gap-2">
                 <Link
                   href="/profile"
-                  className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] bg-black text-white rounded-sm px-3.5 py-2 hover:bg-black/85 transition flex items-center gap-1.5 whitespace-nowrap`}
+                  className={`${mono.className} flex items-center gap-1.5 whitespace-nowrap rounded-sm bg-black px-3 py-1.5 text-[9px] font-semibold tracking-[0.14em] text-white transition hover:bg-black/85 lg:px-3.5 lg:py-2 lg:text-[10px]`}
                 >
-                  <User className="w-3.5 h-3.5" /> AKUN
+                  <User className="h-3.5 w-3.5" aria-hidden="true" /> AKUN
                 </Link>
                 <button
                   onClick={handleLogout}
                   title="Keluar Akun"
-                  className={`${mono.className} text-[10px] font-semibold tracking-[0.15em] border border-black/20 hover:border-black hover:bg-black hover:text-white rounded-sm px-2.5 py-2 transition text-black flex items-center justify-center`}
+                  aria-label="Keluar akun"
+                  className={`${mono.className} flex items-center justify-center rounded-sm border border-black/20 px-2 py-1.5 text-[10px] font-semibold tracking-[0.15em] text-black transition hover:border-black hover:bg-black hover:text-white lg:px-2.5 lg:py-2`}
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -300,50 +339,90 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
             {/* Quick Action Icons */}
             <Link
               href="/pesan"
-              className="flex items-center justify-center w-8 h-8 border border-black/15 rounded-sm hover:border-black hover:bg-black/5 transition text-black/70 hover:text-black"
+              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/70 transition hover:border-black hover:bg-black/5 hover:text-black lg:flex"
               title="Pesan"
+              aria-label="Pesan"
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </Link>
 
             <Link
               href="/keranjang"
-              className="flex items-center justify-center w-8 h-8 border border-black/15 rounded-sm hover:border-black hover:bg-black/5 transition text-black/70 hover:text-black"
+              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/70 transition hover:border-black hover:bg-black/5 hover:text-black lg:flex"
               title="Keranjang"
+              aria-label="Keranjang"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          </div>
+
+          {/* Tablet utility row */}
+          <div className="mt-3 flex items-center gap-2 lg:hidden">
+            <div className="flex flex-1 items-center rounded-sm border border-black/15 bg-[#FAF9F6] px-3 py-2 transition-colors focus-within:border-black">
+              <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-black/40" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="SEARCH CATALOGUE..."
+                aria-label="Cari katalog"
+                className={`${mono.className} w-full min-w-0 bg-transparent text-[10px] uppercase tracking-[0.08em] text-black outline-none placeholder:text-black/30`}
+              />
+            </div>
+            <Link
+              href="/daftar-seller"
+              className={`${mono.className} whitespace-nowrap rounded-sm border border-black/20 px-3 py-2 text-[9px] font-semibold tracking-[0.14em] text-black transition hover:border-black hover:bg-black hover:text-white`}
+            >
+              BUKA TOKO
+            </Link>
+            <Link
+              href="/pesan"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/60 transition hover:border-black hover:bg-black/5"
+              title="Pesan"
+              aria-label="Pesan"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/keranjang"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/60 transition hover:border-black hover:bg-black/5"
+              title="Keranjang"
+              aria-label="Keranjang"
+            >
+              <ShoppingBag className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
       </div>
 
       {/* 3. MOBILE TOP HEADER BAR (Only for < md) */}
-      <div className="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-black/10 px-4 py-3">
-        <div className="flex items-center justify-between gap-3 mb-2.5">
-          <Link href="/" className="flex flex-col">
+      <div className="sticky top-0 z-40 border-b border-black/10 bg-white/95 px-4 py-3.5 backdrop-blur-md md:hidden">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <Link href="/" className="flex min-w-0 flex-col">
             <span
-              className={`${playfair.className} text-xl font-bold text-black leading-none`}
+              className={`${playfair.className} truncate text-xl font-bold leading-none text-black`}
             >
               The Archive
             </span>
             <span
-              className={`${mono.className} text-[7px] tracking-[0.3em] text-black/40 uppercase mt-0.5`}
+              className={`${mono.className} mt-1 text-[7px] uppercase tracking-[0.3em] text-black/40`}
             >
               Curated Selection
             </span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/daftar-seller"
-              className={`${mono.className} text-[9px] font-medium tracking-wider border border-black/15 px-2.5 py-1.5 rounded-sm text-black hover:bg-black hover:text-white transition`}
+              className={`${mono.className} rounded-sm border border-black/15 px-2.5 py-1.5 text-[9px] font-medium tracking-wider text-black transition hover:bg-black hover:text-white`}
             >
               BUKA TOKO
             </Link>
             {!isLoggedIn ? (
               <Link
                 href="/login"
-                className={`${mono.className} text-[9px] font-medium tracking-wider bg-black text-white px-3 py-1.5 rounded-sm`}
+                className={`${mono.className} rounded-sm bg-black px-3 py-1.5 text-[9px] font-medium tracking-wider text-white`}
               >
                 LOGIN
               </Link>
@@ -351,16 +430,17 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
               <div className="flex items-center gap-1.5">
                 <Link
                   href="/profile"
-                  className={`${mono.className} text-[9px] font-medium tracking-wider bg-black text-white px-2.5 py-1.5 rounded-sm flex items-center gap-1`}
+                  className={`${mono.className} flex items-center gap-1 rounded-sm bg-black px-2.5 py-1.5 text-[9px] font-medium tracking-wider text-white`}
                 >
-                  <User className="w-3 h-3" /> AKUN
+                  <User className="h-3 w-3" aria-hidden="true" /> AKUN
                 </Link>
                 <button
                   onClick={handleLogout}
                   title="Keluar"
-                  className={`${mono.className} text-[9px] font-medium border border-black/20 text-black px-2 py-1.5 rounded-sm hover:bg-black hover:text-white transition flex items-center justify-center`}
+                  aria-label="Keluar akun"
+                  className={`${mono.className} flex items-center justify-center rounded-sm border border-black/20 px-2 py-1.5 text-[9px] font-medium text-black transition hover:bg-black hover:text-white`}
                 >
-                  <LogOut className="w-3 h-3" />
+                  <LogOut className="h-3 w-3" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -369,52 +449,66 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
 
         {/* Mobile Search & Quick Icon Row */}
         <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center border border-black/15 rounded-sm px-3 py-2 bg-[#FAF9F6]">
-            <Search className="w-3.5 h-3.5 text-black/30 mr-2 shrink-0" />
+          <div className="flex flex-1 items-center rounded-sm border border-black/15 bg-[#FAF9F6] px-3 py-2">
+            <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-black/30" />
             <input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="SEARCH CATALOGUE..."
-              className={`${mono.className} w-full text-[10px] tracking-[0.05em] uppercase placeholder:text-black/30 outline-none bg-transparent text-black`}
+              aria-label="Cari katalog"
+              className={`${mono.className} w-full min-w-0 bg-transparent text-[10px] uppercase tracking-[0.05em] text-black outline-none placeholder:text-black/30`}
             />
           </div>
           <Link
             href="/pesan"
-            className="w-8 h-8 flex items-center justify-center border border-black/15 rounded-sm text-black/60 shrink-0 hover:bg-black/5 transition"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/60 transition hover:bg-black/5"
             title="Pesan"
+            aria-label="Pesan"
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link
             href="/keranjang"
-            className="w-8 h-8 flex items-center justify-center border border-black/15 rounded-sm text-black/60 shrink-0 hover:bg-black/5 transition"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-black/15 text-black/60 transition hover:bg-black/5"
             title="Keranjang"
+            aria-label="Keranjang"
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </div>
 
       {/* 4. MOBILE BOTTOM NAVIGATION (Intact & preserved for mobile view < md) */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-black flex items-center justify-around py-3 border-t border-white/10 shadow-2xl">
-        {BUYER_NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center gap-1 cursor-pointer transition px-4 py-1 ${
-                isActive
-                  ? "text-white font-semibold opacity-100"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] tracking-wider">{item.label}</span>
-            </Link>
-          );
-        })}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)] shadow-2xl md:hidden">
+        <div className="flex h-16 items-stretch">
+          {BUYER_NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+                  isActive
+                    ? "font-semibold text-white"
+                    : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-x-5 top-0 h-[2px] transition-colors ${
+                    isActive ? "bg-white" : "bg-transparent"
+                  }`}
+                />
+                <item.icon className="h-5 w-5" aria-hidden="true" />
+                <span className="text-[8px] uppercase tracking-[0.14em]">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </header>
   );
