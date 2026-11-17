@@ -115,7 +115,7 @@ export default function EditProfileSeller() {
     } catch (err) {
       console.error("Error submit info toko:", err);
       alert("Informasi toko berhasil disimpen (Local).");
-      router.push("/profile-seller");
+      router.push("/berandaprofile-seller");
     } finally {
       setIsSubmitting(false);
     }

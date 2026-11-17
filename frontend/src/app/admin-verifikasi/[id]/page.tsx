@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, IdCard, FileUser } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { guardAdmin, handleAdminResponse } from "@/utils/adminAuth";
 import { getProductImageUrl } from "@/utils/image";
@@ -113,7 +114,9 @@ export default function StoreDetailsPage() {
   const email = store?.user?.email ?? store?.email ?? "-";
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
+    <div className={`${inter.className} min-h-screen flex flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}>
+      <Navbar variant="admin" />
+
       <div className="flex items-center gap-3 px-4 sm:px-8 py-4 border-b">
         <button onClick={() => router.back()}>
           <ArrowLeft className="w-5 h-5 text-black" />

@@ -45,10 +45,7 @@ export class PesananService {
     });
   }
 
-  async getOrdersByToko(
-    tokoId: number,
-    query: OrderQueryDto,
-  ) {
+  async getOrdersByToko(tokoId: number, query: OrderQueryDto) {
     const { status, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
@@ -67,6 +64,65 @@ export class PesananService {
               nama: true,
               email: true,
               noTelp: true,
+            },
+          },
+          detail: {
+            include: {
+              produk: {
+                select: {
+                  id: true,
+                  namaProduk: true,
+                  fotoProduk: true,
+                  harga: true,
+                },
+              },
+            },
+          },
+          shippingResi: true,
+          komplain: {
+            select: {
+              id: true,
+              statusKomplain: true,
+              alasanKomplain: true,
+            },
+          },
+        },
+        orderBy: { waktuTransaksi: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.transaksi.count({ where }),
+    ]);
+
+    return {
+      data: orders,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getOrdersByBuyer(buyerId: number, query: OrderQueryDto) {
+    const { status, page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = { buyerId };
+    if (status) {
+      where.statusPesanan = status;
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prisma.transaksi.findMany({
+        where,
+        include: {
+          toko: {
+            select: {
+              id: true,
+              namaToko: true,
+              kota: true,
             },
           },
           detail: {
@@ -230,7 +286,10 @@ export class PesananService {
     });
 
     if (pendingOrders.length === 0) {
-      return { message: 'Tidak ada pesanan masuk yang perlu diterima', count: 0 };
+      return {
+        message: 'Tidak ada pesanan masuk yang perlu diterima',
+        count: 0,
+      };
     }
 
     const transaksiIds = pendingOrders.map((o) => o.id);
@@ -374,7 +433,8 @@ export class PesananService {
     });
 
     return {
-      message: 'Pengiriman berhasil dikonfirmasi, status berubah menjadi DIKIRIM',
+      message:
+        'Pengiriman berhasil dikonfirmasi, status berubah menjadi DIKIRIM',
       order: updated,
     };
   }
@@ -438,7 +498,10 @@ export class PesananService {
     });
 
     if (ordersToComplete.length === 0) {
-      return { message: 'Tidak ada pesanan yang perlu diselesaikan otomatis', count: 0 };
+      return {
+        message: 'Tidak ada pesanan yang perlu diselesaikan otomatis',
+        count: 0,
+      };
     }
 
     const transaksiIds = ordersToComplete.map((o) => o.id);

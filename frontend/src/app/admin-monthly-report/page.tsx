@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { guardAdmin, handleAdminResponse } from "@/utils/adminAuth";
 
@@ -122,8 +123,10 @@ export default function MonthlyReportPage() {
 
   return (
     <div
-      className={`${inter.className} flex min-h-screen flex-col bg-white text-black selection:bg-black selection:text-white`}
+      className={`${inter.className} flex min-h-screen flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] text-black selection:bg-black selection:text-white lg:pl-64 lg:pb-0`}
     >
+      <Navbar variant="admin" />
+
       <header className="sticky top-0 z-30 border-b border-black/15 bg-white">
         <div className="mx-auto grid h-16 w-full max-w-3xl grid-cols-[1fr_auto_1fr] items-center px-5 sm:h-[72px] sm:px-8 lg:max-w-5xl xl:max-w-7xl 2xl:max-w-[84rem]">
           <Link

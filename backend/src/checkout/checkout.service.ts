@@ -183,7 +183,7 @@ export class CheckoutService {
         tipe: 'ORDER_CREATED',
         title: 'Pesanan Dibuat',
         message: `Pesanan #${transaksi.id} berhasil dibuat. Silakan lakukan pembayaran dalam 15 menit.`,
-        link: `/checkout/${transaksi.id}`,
+        link: `/my-packet`,
       });
 
       return {
@@ -270,7 +270,7 @@ export class CheckoutService {
       tipe: 'ORDER_PAID',
       title: 'Pembayaran Berhasil',
       message: `Pembayaran untuk pesanan #${transaksi.id} berhasil. Menunggu konfirmasi seller.`,
-      link: `/pesanan/${transaksi.id}`,
+      link: `/my-packet`,
     });
 
     // Notifikasi ke seller
@@ -313,7 +313,7 @@ export class CheckoutService {
       tipe: 'ORDER_FAILED',
       title: 'Pembayaran Gagal',
       message: `Pembayaran untuk pesanan #${transaksi.id} gagal atau kadaluarsa. Stok telah dikembalikan.`,
-      link: `/pesanan/${transaksi.id}`,
+      link: `/my-packet`,
     });
   }
 
@@ -363,7 +363,7 @@ export class CheckoutService {
         tipe: 'ORDER_EXPIRED',
         title: 'Pesanan Kadaluarsa',
         message: `Pesanan #${transaksi.id} dibatalkan karena pembayaran tidak dilakukan dalam 15 menit.`,
-        link: `/pesanan/${transaksi.id}`,
+        link: `/my-packet`,
       });
     }
 

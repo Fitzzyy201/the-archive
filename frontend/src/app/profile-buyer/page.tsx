@@ -194,7 +194,7 @@ export default function ProfileSellerPage() {
 
             {/* UBAH PROFIL */}
             <Link
-              href="/profile-seller/edit"
+              href="/profile-buyer/edit"
               className="group flex min-h-[62px] w-full items-center justify-between rounded-[4px] border border-black/10 bg-white px-5 text-black shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 hover:border-black/20 hover:shadow-[0_12px_35px_rgba(0,0,0,0.07)] md:px-6"
             >
               <div className="flex items-center gap-4">
