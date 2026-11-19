@@ -18,6 +18,7 @@ import { NotificationModule } from './notification/notification.module';
 import { AlamatModule } from './alamat/alamat.module';
 import { KategoriModule } from './kategori/kategori.module';
 import { UlasanModule } from './ulasan/ulasan.module';
+import { KeuanganModule } from './keuangan/keuangan.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UlasanModule } from './ulasan/ulasan.module';
     AlamatModule,
     KategoriModule,
     UlasanModule,
+    KeuanganModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

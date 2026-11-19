@@ -192,7 +192,7 @@ export default function PesananSeller() {
           </Link>
 
           <Link
-            href="/seller/pesanan/riwayat"
+            href="/riwayat-pesanan"
             className="flex items-center justify-between border border-black px-5 py-6 mb-10 hover:bg-black/[0.02] transition"
           >
             <div>

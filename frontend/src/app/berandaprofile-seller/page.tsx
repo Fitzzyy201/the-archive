@@ -110,15 +110,15 @@ export default function ProfileSeller() {
 
             {/* List Option Cards (Keuangan & Grafik) */}
             <div className="w-full space-y-4">
-              <button
-                onClick={() => handleDisabledFeature("Keuangan")}
+              <Link
+                href="/keuangan-seller"
                 className="w-full border border-black p-4 flex items-center justify-between bg-white rounded-sm hover:bg-black/[0.02] transition text-left group"
               >
                 <span className={`${mono.className} text-xs sm:text-sm font-bold tracking-widest text-black uppercase`}>
                   KEUANGAN
                 </span>
                 <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
 
               <button
                 onClick={() => handleDisabledFeature("Grafik Produk Terjual")}

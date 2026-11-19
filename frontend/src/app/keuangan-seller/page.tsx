@@ -104,7 +104,7 @@ export default function KeuanganSeller() {
         <div className="flex items-center justify-around md:flex-1 md:flex-col md:items-stretch md:justify-start md:gap-1.5">
           <NavItem href="/beranda-seller" icon={<Home className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="BERANDA" />
           <NavItem href="/produk-seller" icon={<Package className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="PRODUK" />
-          <NavItem href="/pesanan-seller" icon={<ShoppingBag className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="PESANAN" />
+          <NavItem href="/seller/pesanan" icon={<ShoppingBag className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="PESANAN" />
           <NavItem
             href="/berandaprofile-seller"
             icon={<User className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />}

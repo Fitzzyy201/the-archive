@@ -12,18 +12,19 @@ import {
   History,
 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 type StatusPesanan =
-  | "BelumBayar"
-  | "Diproses"
-  | "Dikirim"
-  | "Selesai"
-  | "Dikomplain"
-  | "Batal";
+  | "PENDING"
+  | "DIPROSES"
+  | "DIKIRIM"
+  | "SELESAI"
+  | "DITOLAK"
+  | "DIBATALKAN";
 
 // Struktur disamain sama model Transaksi (+ produknya) di Prisma
 type RiwayatItem = {
@@ -31,21 +32,23 @@ type RiwayatItem = {
   totalHarga: number;
   statusPesanan: StatusPesanan;
   waktuTransaksi: string;
-  produk?: {
-    namaProduk: string;
-    ukuranDimensi: string;
-    fotoProduk: string;
-  } | null;
+  detail?: {
+    produk?: {
+      namaProduk: string;
+      ukuranDimensi?: string;
+      fotoProduk: string;
+    } | null;
+  }[];
 };
 
 const STATUS_LABEL: Partial<Record<StatusPesanan, string>> = {
-  Selesai: "SELESAI",
-  Dikomplain: "DIKOMPLAIN",
-  Batal: "DIBATALKAN",
+  SELESAI: "SELESAI",
+  DITOLAK: "DITOLAK",
+  DIBATALKAN: "DIBATALKAN",
 };
 
-// Riwayat = pesanan yang udah berakhir (selesai, dikomplain, atau dibatalkan)
-const STATUS_RIWAYAT: StatusPesanan[] = ["Selesai", "Dikomplain", "Batal"];
+// Riwayat = pesanan yang udah berakhir (selesai, ditolak, atau dibatalkan)
+const STATUS_RIWAYAT: StatusPesanan[] = ["SELESAI", "DITOLAK", "DIBATALKAN"];
 
 function formatRupiah(angka: number) {
   return `Rp ${angka.toLocaleString("id-ID")}`;
@@ -77,24 +80,28 @@ export default function RiwayatPesanan() {
 
   useEffect(() => {
     const fetchRiwayat = async () => {
-      const tokoId = localStorage.getItem("tokoId");
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role") || localStorage.getItem("userRole");
 
-      if (!tokoId) {
+      if (!token || role !== "Seller") {
         setIsLoading(false);
         return;
       }
 
       try {
-        const res = await fetch(`http://localhost:3001/transaksi/toko/${tokoId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await fetch(
+          "http://localhost:3001/seller/orders/history?limit=50",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         if (res.ok) {
-          const data: RiwayatItem[] = await res.json();
+          const payload = await res.json();
+          const data: RiwayatItem[] = Array.isArray(payload?.data)
+            ? payload.data
+            : [];
           setRiwayat(
-            Array.isArray(data)
-              ? data.filter((t) => STATUS_RIWAYAT.includes(t.statusPesanan))
-              : []
+            data.filter((t) => STATUS_RIWAYAT.includes(t.statusPesanan))
           );
         }
       } catch (err) {
@@ -115,7 +122,7 @@ export default function RiwayatPesanan() {
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
         <NavItem
-          href="/pesanan-seller"
+          href="/seller/pesanan"
           icon={<ShoppingBag className="w-5 h-5" />}
           label="PESANAN"
           active
@@ -186,6 +193,8 @@ function EmptyState() {
 }
 
 function RiwayatCard({ item }: { item: RiwayatItem }) {
+  const produk = item.detail?.[0]?.produk;
+
   return (
     <div className="py-6 border-b border-black/10 first:pt-0">
       <div className="flex items-start justify-between mb-4">
@@ -204,10 +213,10 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
 
       <div className="flex gap-4 mb-5">
         <div className="w-24 h-24 bg-black/5 overflow-hidden shrink-0 flex items-center justify-center">
-          {isRenderable(item.produk?.fotoProduk) ? (
+          {isRenderable(getProductImageUrl(produk?.fotoProduk)) ? (
             <img
-              src={item.produk?.fotoProduk}
-              alt={item.produk?.namaProduk}
+              src={getProductImageUrl(produk?.fotoProduk)}
+              alt={produk?.namaProduk}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -219,10 +228,10 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
           <h3
             className={`${playfair.className} text-base font-bold uppercase tracking-wide text-black leading-snug`}
           >
-            {item.produk?.namaProduk ?? "Produk"}
+            {produk?.namaProduk ?? "Produk"}
           </h3>
           <p className="text-[11px] tracking-wide text-black/50 mt-2">
-            SIZE: {item.produk?.ukuranDimensi ?? "-"}
+            SIZE: {produk?.ukuranDimensi ?? "-"}
           </p>
           <p className="text-base font-bold text-black mt-4">{formatRupiah(item.totalHarga)}</p>
         </div>
@@ -230,13 +239,13 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
 
       <div className="flex justify-end gap-2">
         <Link
-          href={`/komplain/${item.id}`}
+          href={`/seller/pesanan/${item.id}`}
           className="border border-black px-5 py-3 text-[11px] font-semibold tracking-[0.12em] text-black hover:bg-black/[0.03] transition"
         >
           LIHAT KOMPLAIN
         </Link>
         <Link
-          href={`/detail-pesanan?id=${item.id}`}
+          href={`/seller/pesanan/${item.id}`}
           className="bg-black text-white px-6 py-3 text-[11px] font-semibold tracking-[0.12em] hover:bg-black/85 transition"
         >
           DETAIL
