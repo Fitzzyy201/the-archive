@@ -5,18 +5,19 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Package } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 type StatusPesanan =
-  | "BelumBayar"
-  | "Diproses"
-  | "Dikirim"
-  | "Selesai"
-  | "Dikomplain"
-  | "Batal";
+  | "PENDING"
+  | "DIPROSES"
+  | "DIKIRIM"
+  | "SELESAI"
+  | "DITOLAK"
+  | "DIBATALKAN";
 
 // Struktur disamain sama model Transaksi + User + AlamatPengiriman di Prisma
 type ItemProduk = {
@@ -42,25 +43,16 @@ type DetailPesanan = {
 };
 
 const STATUS_LABEL: Record<StatusPesanan, string> = {
-  BelumBayar: "BELUM BAYAR",
-  Diproses: "PERLU DIKIRIM",
-  Dikirim: "DIKIRIM",
-  Selesai: "SELESAI",
-  Dikomplain: "DIKOMPLAIN",
-  Batal: "DIBATALKAN",
+  PENDING: "MENUNGGU KONFIRMASI",
+  DIPROSES: "PERLU DIKIRIM",
+  DIKIRIM: "DIKIRIM",
+  SELESAI: "SELESAI",
+  DITOLAK: "DITOLAK",
+  DIBATALKAN: "DIBATALKAN",
 };
 
 function formatRupiah(angka: number) {
   return `Rp ${angka.toLocaleString("id-ID")}`;
-}
-
-function isRenderable(src?: string) {
-  return (
-    !!src &&
-    (src.startsWith("http://") ||
-      src.startsWith("https://") ||
-      src.startsWith("data:image"))
-  );
 }
 
 function formatTanggal(dateStr: string) {
@@ -88,11 +80,31 @@ function DetailPesananContent() {
 
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:3001/transaksi/${pesananId}`, {
+        const res = await fetch(`http://localhost:3001/seller/orders/${pesananId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
-          setData(await res.json());
+          const order = await res.json();
+          setData({
+            id: order.id,
+            statusPesanan: order.statusPesanan,
+            waktuTransaksi: order.waktuTransaksi,
+            totalHarga: order.totalHarga,
+            buyer: order.buyer,
+            items: (order.detail ?? []).map(
+              (d: {
+                qty: number;
+                hargaSatuan: number;
+                produk?: { namaProduk: string; ukuranDimensi?: string; fotoProduk: string };
+              }) => ({
+                namaProduk: d.produk?.namaProduk ?? "Produk",
+                ukuranDimensi: d.produk?.ukuranDimensi ?? "-",
+                qty: d.qty,
+                harga: d.hargaSatuan,
+                fotoProduk: d.produk?.fotoProduk ?? "",
+              })
+            ),
+          });
         }
       } catch (err) {
         // Backend belum nyala / endpoint belum ada: tetap kosong
@@ -113,14 +125,19 @@ function DetailPesananContent() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:3001/transaksi/${pesananId}/${aksi}`, {
-        method: "PATCH",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      const endpoint = aksi === "terima" ? "accept" : "reject";
+      const res = await fetch(`http://localhost:3001/seller/orders/${pesananId}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: aksi === "tolak" ? JSON.stringify({ alasanPenolakan: "Ditolak oleh seller" }) : undefined,
       });
 
       if (res.ok) {
         // Pesanan diterima lanjut ke input resi, ditolak balik ke daftar pesanan
-        router.push(aksi === "terima" ? `/resi-pesanan?id=${pesananId}` : "/pesanan-seller");
+        router.push(aksi === "terima" ? `/seller/pesanan/resi/${pesananId}` : "/pesanan-seller");
       } else {
         alert("Gagal memproses pesanan.");
       }
@@ -134,7 +151,7 @@ function DetailPesananContent() {
 
   const buyerName = data?.buyer?.nama || data?.buyer?.username || data?.buyer?.email?.split("@")[0] || "-";
   const waktu = data ? formatTanggal(data.waktuTransaksi) : null;
-  const bisaDiputuskan = data?.statusPesanan === "Diproses";
+  const bisaDiputuskan = data?.statusPesanan === "PENDING";
 
   return (
     <div className={`${inter.className} min-h-screen flex flex-col bg-[#FAF9F6]`}>
@@ -211,9 +228,9 @@ function DetailPesananContent() {
                   (data.items ?? []).map((item, i) => (
                     <div key={i} className="flex gap-4 py-4 border-b border-black/10 last:border-b-0">
                       <div className="w-20 h-24 border border-black bg-white overflow-hidden shrink-0 flex items-center justify-center">
-                        {isRenderable(item.fotoProduk) ? (
+                        {item.fotoProduk ? (
                           <img
-                            src={item.fotoProduk}
+                            src={getProductImageUrl(item.fotoProduk)}
                             alt={item.namaProduk}
                             className="w-full h-full object-cover"
                           />

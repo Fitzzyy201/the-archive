@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, Home, Package, ShoppingBag, User, Inbox } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -21,15 +22,6 @@ type PesananMasukItem = {
 
 function formatRupiah(angka: number) {
   return `Rp ${angka.toLocaleString("id-ID")}`;
-}
-
-function isRenderable(src?: string) {
-  return (
-    !!src &&
-    (src.startsWith("http://") ||
-      src.startsWith("https://") ||
-      src.startsWith("data:image"))
-  );
 }
 
 function namaBuyer(p: PesananMasukItem) {
@@ -55,16 +47,32 @@ export default function PesananMasuk() {
       }
 
       try {
-        const res = await fetch(`http://localhost:3001/transaksi/toko/${tokoId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        const res = await fetch(`http://localhost:3001/seller/orders/incoming?limit=50`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data: PesananMasukItem[] = await res.json();
-          // Pesanan masuk = yang menunggu aksi seller
-          setPesanan(Array.isArray(data) ? data.filter((t) => t.statusPesanan === "Diproses") : []);
+          const payload = await res.json();
+          const data: Array<{
+            id: number;
+            totalHarga: number;
+            statusPesanan: string;
+            buyer?: { nama?: string | null; username?: string | null; email?: string };
+            detail?: Array<{ produk?: { namaProduk: string; fotoProduk: string } }>;
+          }> = Array.isArray(payload?.data) ? payload.data : [];
+          setPesanan(
+            data.map((t) => ({
+              id: t.id,
+              totalHarga: t.totalHarga,
+              statusPesanan: t.statusPesanan,
+              buyer: t.buyer,
+              produk: t.detail?.[0]?.produk,
+            }))
+          );
         }
 
-        const resToko = await fetch(`http://localhost:3001/toko/${tokoId}`);
+        const resToko = await fetch(`http://localhost:3001/toko/status-my-shop`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (resToko.ok) {
           const toko = await resToko.json();
           if (toko.namaToko) setNamaToko(toko.namaToko);
@@ -90,10 +98,16 @@ export default function PesananMasuk() {
 
     try {
       const berhasil: number[] = [];
+      const endpoint = aksi === "terima" ? "accept" : "reject";
+
       for (const id of ids) {
-        const res = await fetch(`http://localhost:3001/transaksi/${id}/${aksi}`, {
-          method: "PATCH",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        const res = await fetch(`http://localhost:3001/seller/orders/${id}/${endpoint}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: aksi === "tolak" ? JSON.stringify({ alasanPenolakan: "Ditolak oleh seller" }) : undefined,
         });
         if (res.ok) berhasil.push(id);
       }
@@ -127,7 +141,7 @@ export default function PesananMasuk() {
         <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
         <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
         <NavItem
-          href="/pesanan-seller"
+          href="/seller/pesanan"
           icon={<ShoppingBag className="w-5 h-5" />}
           label="PESANAN"
           active
@@ -257,9 +271,9 @@ function OrderCard({
           href={`/detail-pesanan?id=${item.id}`}
           className="w-24 h-32 bg-black/5 overflow-hidden shrink-0 flex items-center justify-center"
         >
-          {isRenderable(item.produk?.fotoProduk) ? (
+          {item.produk?.fotoProduk ? (
             <img
-              src={item.produk?.fotoProduk}
+              src={getProductImageUrl(item.produk.fotoProduk)}
               alt={item.produk?.namaProduk}
               className="w-full h-full object-cover"
             />

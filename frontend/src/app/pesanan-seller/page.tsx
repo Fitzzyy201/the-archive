@@ -177,7 +177,7 @@ export default function PesananSeller() {
           </div>
 
           <Link
-            href="/seller/pesanan/masuk"
+            href="/pesanan-masuk"
             className="flex items-center justify-between bg-black text-white px-5 py-6 mb-6 hover:bg-black/90 transition"
           >
             <div>

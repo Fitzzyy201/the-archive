@@ -47,7 +47,9 @@ export class PesananService {
 
   async getOrdersByToko(tokoId: number, query: OrderQueryDto) {
     const { status, page = 1, limit = 10 } = query;
-    const skip = (page - 1) * limit;
+    const numPage = Number(page);
+    const numLimit = Number(limit);
+    const skip = (numPage - 1) * numLimit;
 
     const where: any = { tokoId };
     if (status) {
@@ -89,7 +91,7 @@ export class PesananService {
         },
         orderBy: { waktuTransaksi: 'desc' },
         skip,
-        take: limit,
+        take: numLimit,
       }),
       this.prisma.transaksi.count({ where }),
     ]);
@@ -98,16 +100,18 @@ export class PesananService {
       data: orders,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: numPage,
+        limit: numLimit,
+        totalPages: Math.ceil(total / numLimit),
       },
     };
   }
 
   async getOrdersByBuyer(buyerId: number, query: OrderQueryDto) {
     const { status, page = 1, limit = 10 } = query;
-    const skip = (page - 1) * limit;
+    const numPage = Number(page);
+    const numLimit = Number(limit);
+    const skip = (numPage - 1) * numLimit;
 
     const where: any = { buyerId };
     if (status) {
@@ -148,7 +152,7 @@ export class PesananService {
         },
         orderBy: { waktuTransaksi: 'desc' },
         skip,
-        take: limit,
+        take: numLimit,
       }),
       this.prisma.transaksi.count({ where }),
     ]);
@@ -157,9 +161,9 @@ export class PesananService {
       data: orders,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: numPage,
+        limit: numLimit,
+        totalPages: Math.ceil(total / numLimit),
       },
     };
   }

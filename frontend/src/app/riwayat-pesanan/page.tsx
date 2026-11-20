@@ -65,15 +65,6 @@ function kodePesanan(p: RiwayatItem) {
   return `#VT-${tahun}-${String(p.id).padStart(3, "0")}`;
 }
 
-function isRenderable(src?: string) {
-  return (
-    !!src &&
-    (src.startsWith("http://") ||
-      src.startsWith("https://") ||
-      src.startsWith("data:image"))
-  );
-}
-
 export default function RiwayatPesanan() {
   const [riwayat, setRiwayat] = useState<RiwayatItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -213,9 +204,9 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
 
       <div className="flex gap-4 mb-5">
         <div className="w-24 h-24 bg-black/5 overflow-hidden shrink-0 flex items-center justify-center">
-          {isRenderable(getProductImageUrl(produk?.fotoProduk)) ? (
+          {produk?.fotoProduk ? (
             <img
-              src={getProductImageUrl(produk?.fotoProduk)}
+              src={getProductImageUrl(produk.fotoProduk)}
               alt={produk?.namaProduk}
               className="w-full h-full object-cover"
             />
@@ -239,13 +230,13 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
 
       <div className="flex justify-end gap-2">
         <Link
-          href={`/seller/pesanan/${item.id}`}
+          href={`/detail-pesanan?id=${item.id}`}
           className="border border-black px-5 py-3 text-[11px] font-semibold tracking-[0.12em] text-black hover:bg-black/[0.03] transition"
         >
           LIHAT KOMPLAIN
         </Link>
         <Link
-          href={`/seller/pesanan/${item.id}`}
+          href={`/detail-pesanan?id=${item.id}`}
           className="bg-black text-white px-6 py-3 text-[11px] font-semibold tracking-[0.12em] hover:bg-black/85 transition"
         >
           DETAIL
