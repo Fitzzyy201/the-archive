@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -123,16 +124,20 @@ export default function EditProfileSeller() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
-        <p className={`${mono.className} text-xs tracking-widest text-black/40 animate-pulse uppercase`}>
-          Memuat Informasi Toko...
-        </p>
+      <div className="min-h-screen bg-[#FAF9F6] md:pl-56">
+        <Navbar variant="seller" />
+        <div className="flex items-center justify-center">
+          <p className={`${mono.className} text-xs tracking-widest text-black/40 animate-pulse uppercase`}>
+            Memuat Informasi Toko...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-[#FAF9F6] flex flex-col ${inter.className}`}>
+    <div className={`min-h-screen bg-[#FAF9F6] flex flex-col ${inter.className} md:pl-56`}>
+      <Navbar variant="seller" />
       {/* Top Header */}
       <div className="px-5 py-5 border-b border-black flex items-center relative bg-[#FAF9F6]">
         <Link href="/berandaprofile-seller" className="text-black hover:opacity-75 transition">

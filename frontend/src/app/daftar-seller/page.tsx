@@ -11,15 +11,14 @@ import {
   EyeOff,
   Store,
 } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
 });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 const DAFTAR_KOTA = [
   "Bangkalan",
@@ -220,7 +219,7 @@ export default function RegistrasiSeller() {
       <Navbar />
 
       <main
-        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+        className={`${jakarta.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
       >
         <div className="w-full max-w-lg lg:max-w-xl mx-auto">
           <div className="text-center mb-8">
@@ -247,7 +246,7 @@ export default function RegistrasiSeller() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   NAMA TOKO
                 </label>
@@ -263,7 +262,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   EMAIL TOKO / AKUN
                 </label>
@@ -279,7 +278,7 @@ export default function RegistrasiSeller() {
 
               <div className="relative">
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   KOTA ASAL TOKO (PULAU JAWA)
                 </label>
@@ -317,7 +316,7 @@ export default function RegistrasiSeller() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NOMOR TELEPON (ANGKA)
                   </label>
@@ -333,7 +332,7 @@ export default function RegistrasiSeller() {
                 </div>
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NOMOR REKENING (ANGKA)
                   </label>
@@ -352,7 +351,7 @@ export default function RegistrasiSeller() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NIK / KTP (16 DIGIT)
                   </label>
@@ -369,7 +368,7 @@ export default function RegistrasiSeller() {
                 </div>
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NPWP (ANGKA)
                   </label>
@@ -387,7 +386,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   PASSWORD
                 </label>
@@ -417,10 +416,10 @@ export default function RegistrasiSeller() {
                 {password.length > 0 && (
                   <div className="mt-2 space-y-1.5">
                     <div className="flex items-center justify-between text-[9px]">
-                      <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
+                      <span className={`${jakarta.className} tracking-wider text-black/50 uppercase`}>
                         KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
                       </span>
-                      <span className={`${mono.className} text-black/40`}>
+                      <span className={`${jakarta.className} text-black/40`}>
                         {password.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
                       </span>
                     </div>
@@ -435,7 +434,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   DOKUMEN VERIFIKASI IDENTITAS
                 </label>

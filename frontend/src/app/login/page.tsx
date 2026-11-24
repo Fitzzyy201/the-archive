@@ -4,15 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -80,19 +78,19 @@ export default function LoginPage() {
       <Navbar />
 
       <main
-        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+        className={`${jakarta.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
       >
         <div className="w-full max-w-md mx-auto">
           {/* Header Card */}
           <div className="text-center mb-8">
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
+              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition"
             >
               <ArrowLeft className="w-4 h-4" /> KEMBALI
             </button>
             <h1
-              className={`${playfair.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
+              className={`${jakarta.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
             >
               Welcome Back
             </h1>
@@ -106,7 +104,7 @@ export default function LoginPage() {
             <form className="space-y-5" onSubmit={handleLogin}>
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   EMAIL
                 </label>
@@ -122,7 +120,7 @@ export default function LoginPage() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   PASSWORD
                 </label>
@@ -153,7 +151,7 @@ export default function LoginPage() {
               <div className="text-right">
                 <Link
                   href="/lupa-password"
-                  className={`${mono.className} text-[10px] tracking-wider text-black/60 hover:text-black transition`}
+                  className={`${jakarta.className} text-[11px] tracking-wide text-black/60 hover:text-black transition`}
                 >
                   LUPA PASSWORD?
                 </Link>
@@ -162,7 +160,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`${mono.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition ${
+                className={`${jakarta.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition ${
                   isLoading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
@@ -173,7 +171,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer Options */}
-          <div className="text-center text-xs text-black/60 mt-6 font-sans space-y-2">
+          <div className="text-center text-xs text-black/60 mt-6 space-y-2">
             <p>
               Belum memiliki akun?{" "}
               <Link

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { ArrowLeft, MessageCircle, Plus } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
 });
 
-const inter = Inter({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 const DEFECT_OPTIONS = ["Stain", "Warna Pudar", "Robek", "Lainnya"];
 
@@ -118,7 +119,10 @@ export default function TambahProduk() {
   };
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
+    <div className={`${jakarta.className} min-h-screen bg-white md:pl-56`}>
+      <Navbar variant="seller" />
+
+      <div className="flex min-h-screen flex-col">
       <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b">
         <button>
           <ArrowLeft className="w-5 h-5 text-black" />
@@ -167,6 +171,7 @@ export default function TambahProduk() {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }

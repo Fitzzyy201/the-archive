@@ -2,21 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
-  Home,
-  Package,
-  ShoppingBag,
-  User,
   ChevronRight,
   History,
+  Package,
   PackageSearch,
 } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 type StatusPesanan =
   | "BelumBayar"
@@ -118,16 +114,10 @@ export default function PesananSeller() {
   const filtered = pesanan.filter((p) => matchTab(p.statusPesanan, activeTab));
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-     
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className="min-h-screen bg-[#FAF9F6] md:pl-56">
+      <Navbar variant="seller" />
 
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+      <div className={`${jakarta.className} flex min-h-screen flex-col`}>
         <div className="w-full md:max-w-2xl md:mx-auto px-5 sm:px-8 pb-10">
           <h1
             className={`${playfair.className} text-3xl font-bold tracking-wide text-black text-center pt-8 pb-5 border-b border-black`}
@@ -183,7 +173,7 @@ export default function PesananSeller() {
 
           {isLoading ? (
             <p
-              className={`${mono.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
+              className={`${jakarta.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
             >
               Memuat pesanan...
             </p>
@@ -220,7 +210,7 @@ function PesananCard({ pesanan }: { pesanan: Pesanan }) {
   return (
     <div className="py-8 first:pt-0">
       <div className="flex items-center justify-between mb-4">
-        <p className={`${mono.className} text-[10px] tracking-wide text-black/45`}>
+        <p className={`${jakarta.className} text-[10px] tracking-wide text-black/45`}>
           {kodePesanan(pesanan)} • {formatTanggal(pesanan.waktuTransaksi)}
         </p>
         <p className="text-[10px] tracking-wide text-black">
@@ -263,30 +253,5 @@ function PesananCard({ pesanan }: { pesanan: Pesanan }) {
         DETAIL
       </Link>
     </div>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname.startsWith(href);
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 transition md:px-6 md:py-3 md:rounded-md ${
-        isActive ? "text-white font-semibold" : "text-white/40 hover:text-white/70"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm tracking-wide">{label}</span>
-    </Link>
   );
 }

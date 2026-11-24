@@ -2,20 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   ArrowUpRight,
   ChevronRight,
   RefreshCw,
-  Home,
-  Package,
-  ShoppingBag,
-  User,
   ReceiptText,
   Wallet,
 } from "lucide-react";
 import { Geist, Instrument_Serif } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const sans = Geist({ subsets: ["latin"] });
 const serif = Instrument_Serif({ subsets: ["latin"], weight: "400" });
@@ -98,24 +94,11 @@ export default function KeuanganSeller() {
   const tampil = showAll ? riwayat : riwayat.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className={`${sans.className} min-h-screen flex flex-col md:flex-row bg-[#F7F5F0] text-[#141414]`}>
-      {/* Sidebar (desktop) / Bottom Nav (mobile) */}
-      <div className="order-2 fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#0D0D0D] px-3 pt-2.5 pb-[calc(0.65rem+env(safe-area-inset-bottom))] md:sticky md:top-0 md:order-1 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-t-0 md:border-r md:border-white/10 md:px-4 md:pt-10 md:pb-8 lg:w-64 lg:px-5">
-        <div className="flex items-center justify-around md:flex-1 md:flex-col md:items-stretch md:justify-start md:gap-1.5">
-          <NavItem href="/beranda-seller" icon={<Home className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="BERANDA" />
-          <NavItem href="/produk-seller" icon={<Package className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="PRODUK" />
-          <NavItem href="/pesanan-seller" icon={<ShoppingBag className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />} label="PESANAN" />
-          <NavItem
-            href="/berandaprofile-seller"
-            icon={<User className="h-[18px] w-[18px] md:h-[19px] md:w-[19px]" strokeWidth={1.6} />}
-            label="PROFILE"
-            active
-          />
-        </div>
-      </div>
+    <div className={`${sans.className} min-h-screen bg-[#F7F5F0] text-[#141414] md:pl-56`}>
+      <Navbar variant="seller" />
 
       {/* Main content */}
-      <div className="order-1 md:order-2 flex w-full min-w-0 flex-1 flex-col">
+      <div className="flex min-h-screen w-full min-w-0 flex-col">
         {/* Header */}
         <header className="border-b border-black/10 bg-[#F7F5F0]">
           <div className="mx-auto flex w-full max-w-[1200px] items-center gap-4 px-5 py-5 sm:px-8 sm:py-6 lg:px-12 xl:px-16">
@@ -306,32 +289,3 @@ function LogRow({ log }: { log: LogKeuangan }) {
   );
 }
 
-function NavItem({
-  href,
-  icon,
-  label,
-  active = false,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  const pathname = usePathname();
-  const isActive = active || pathname.startsWith(href);
-
-  return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={`flex flex-1 flex-col items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 text-[10px] font-medium tracking-[0.14em] uppercase transition-colors duration-200 md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3.5 md:py-3 md:text-[11px] md:tracking-[0.16em] ${
-        isActive
-          ? "text-white md:bg-white md:text-black"
-          : "text-white/50 hover:text-white/85 md:hover:bg-white/[0.06]"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
-  );
-}

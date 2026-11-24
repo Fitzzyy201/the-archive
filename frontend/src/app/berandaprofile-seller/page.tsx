@@ -2,23 +2,38 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Package, ShoppingBag, User, ChevronRight, Store } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { ChevronRight, Store } from "lucide-react";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+
+const NAMA_TOKO_FALLBACK = "Nama Toko Belum Diatur";
 
 type TokoInfo = {
   namaToko: string;
   fotoToko?: string;
 };
 
+type StatusTokoResponse = {
+  tokoId?: number | null;
+  namaToko?: string | null;
+  statusVerif?: string | null;
+};
+
+type DetailTokoResponse = {
+  namaToko?: string | null;
+  fotoToko?: string | null;
+};
+
+function namaTokoValid(nama?: string | null) {
+  return typeof nama === "string" ? nama.trim() : "";
+}
+
 export default function ProfileSeller() {
-  const router = useRouter();
   const [toko, setToko] = useState<TokoInfo>({
-    namaToko: "THE DIARIES STORE",
+    namaToko: NAMA_TOKO_FALLBACK,
     fotoToko: "",
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -26,29 +41,61 @@ export default function ProfileSeller() {
   useEffect(() => {
     queueMicrotask(async () => {
       const token = localStorage.getItem("token");
-      const tokoId = localStorage.getItem("tokoId");
 
-      if (token && tokoId) {
-        try {
-          const res = await fetch(`http://localhost:3001/toko/${tokoId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
-          if (res.ok) {
-            const data = await res.json();
-            setToko({
-              namaToko: data.namaToko || "THE DIARIES STORE",
-              fotoToko: data.fotoToko || "",
-            });
-          }
-        } catch (err) {
-          console.error("Gagal mengambil info toko:", err);
-        } finally {
+      try {
+        // 1. Backend membaca JWT dan mencari toko milik user yang sedang login.
+        const statusRes = await fetch("http://localhost:3001/toko/status-my-shop", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!statusRes.ok) {
           setIsLoading(false);
+          return;
         }
-      } else {
+
+        const statusData: StatusTokoResponse = await statusRes.json();
+        const tokoId = Number(statusData?.tokoId);
+
+        if (!tokoId) {
+          // Jangan pakai tokoId lama yang mungkin milik seller lain.
+          localStorage.removeItem("tokoId");
+          setToko({ namaToko: NAMA_TOKO_FALLBACK, fotoToko: "" });
+          setIsLoading(false);
+          return;
+        }
+
+        // Simpan tokoId hasil verifikasi token agar konsisten dengan halaman seller lain.
+        localStorage.setItem("tokoId", String(tokoId));
+
+        const namaDariStatus = namaTokoValid(statusData?.namaToko);
+
+        // 2. Ambil detail toko (termasuk foto) dari toko milik seller ini.
+        const detailRes = await fetch(`http://localhost:3001/toko/${tokoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (detailRes.ok) {
+          const detailData: DetailTokoResponse = await detailRes.json();
+          const namaDariDetail = namaTokoValid(detailData?.namaToko);
+
+          setToko({
+            namaToko: namaDariDetail || namaDariStatus || NAMA_TOKO_FALLBACK,
+            fotoToko: typeof detailData?.fotoToko === "string" ? detailData.fotoToko : "",
+          });
+        } else {
+          setToko({
+            namaToko: namaDariStatus || NAMA_TOKO_FALLBACK,
+            fotoToko: "",
+          });
+        }
+      } catch (err) {
+        console.error("Gagal mengambil info toko:", err);
+      } finally {
         setIsLoading(false);
       }
     });
@@ -59,56 +106,50 @@ export default function ProfileSeller() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-      {/* Sidebar Navigation */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className={`${jakarta.className} min-h-screen bg-[#FAF9F6] text-black md:pl-56`}>
+      <Navbar variant="seller" />
 
-      {/* Main Content Area */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+      <div className="flex min-h-screen flex-col pb-24 md:pb-0">
         {/* Header Title */}
-        <div className="px-5 sm:px-10 py-6 border-b border-black/10 bg-white text-center md:text-left">
-          <h1 className={`${playfair.className} text-xl sm:text-2xl font-bold tracking-wider text-black uppercase`}>
-            {toko.namaToko}
+        <div className="border-b border-black/10 bg-white px-5 py-6 text-center sm:px-10 md:text-left">
+          <h1
+            className={`${playfair.className} text-xl font-bold tracking-wider text-black sm:text-2xl`}
+          >
+            {isLoading ? "Memuat Toko..." : toko.namaToko}
           </h1>
         </div>
 
         {/* Content Container */}
-        <div className="flex-1 w-full px-5 sm:px-10 py-10 flex flex-col items-center justify-start">
-          <div className="w-full max-w-md flex flex-col items-center">
-            
+        <div className="flex w-full flex-1 flex-col items-center justify-start px-5 py-10 sm:px-10">
+          <div className="flex w-full max-w-md flex-col items-center">
             {/* Avatar Circle */}
-            <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full border border-black flex items-center justify-center bg-gray-50 overflow-hidden mb-6 shadow-sm">
+            <div className="mb-6 flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border border-black bg-gray-50 shadow-sm sm:h-44 sm:w-44">
               {toko.fotoToko ? (
                 <img
                   src={
-                    !toko?.fotoToko
-                      ? "/placeholder.png"
-                      : toko.fotoToko.startsWith("http") || toko.fotoToko.startsWith("data:")
+                    toko.fotoToko.startsWith("http") || toko.fotoToko.startsWith("data:")
                       ? toko.fotoToko
                       : `http://localhost:3001/uploads/${toko.fotoToko}`
                   }
-                  alt={toko?.namaToko || "Foto Toko"}
-                  className="w-full h-full object-cover rounded-full"
+                  alt={isLoading ? "Foto Toko" : toko.namaToko}
+                  className="h-full w-full rounded-full object-cover"
                 />
-) : (
-  <Store className="w-16 h-16 text-black/30" strokeWidth={1} />
-)}
+              ) : (
+                <Store className="h-16 w-16 text-black/30" strokeWidth={1} />
+              )}
             </div>
 
             {/* Nama Toko */}
-            <h2 className={`${playfair.className} text-xl sm:text-2xl font-bold text-black tracking-wide text-center uppercase mb-6`}>
-              {isLoading ? "LOADING..." : toko.namaToko}
+            <h2
+              className={`${playfair.className} mb-6 text-center text-xl font-bold tracking-wide text-black sm:text-2xl`}
+            >
+              {isLoading ? "Memuat..." : toko.namaToko}
             </h2>
 
             {/* Tombol UBAH */}
             <Link
               href="/berandaprofile-seller/edit"
-              className="w-full sm:w-52 bg-black text-white text-xs font-bold tracking-[0.2em] py-3 text-center uppercase rounded-sm hover:bg-black/85 transition mb-10"
+              className="mb-10 w-full rounded-sm bg-black py-3 text-center text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/85 sm:w-52"
             >
               UBAH
             </Link>
@@ -117,53 +158,31 @@ export default function ProfileSeller() {
             <div className="w-full space-y-4">
               <button
                 onClick={() => handleDisabledFeature("Keuangan")}
-                className="w-full border border-black p-4 flex items-center justify-between bg-white rounded-sm hover:bg-black/[0.02] transition text-left group"
+                className="group flex w-full items-center justify-between rounded-sm border border-black bg-white p-4 text-left transition hover:bg-black/[0.02]"
               >
-                <span className={`${mono.className} text-xs sm:text-sm font-bold tracking-widest text-black uppercase`}>
+                <span
+                  className={`${jakarta.className} text-xs font-bold uppercase tracking-widest text-black sm:text-sm`}
+                >
                   KEUANGAN
                 </span>
-                <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="h-4 w-4 text-black transition-transform group-hover:translate-x-1" />
               </button>
 
               <button
                 onClick={() => handleDisabledFeature("Grafik Produk Terjual")}
-                className="w-full border border-black p-4 flex items-center justify-between bg-white rounded-sm hover:bg-black/[0.02] transition text-left group"
+                className="group flex w-full items-center justify-between rounded-sm border border-black bg-white p-4 text-left transition hover:bg-black/[0.02]"
               >
-                <span className={`${mono.className} text-xs sm:text-sm font-bold tracking-widest text-black uppercase`}>
+                <span
+                  className={`${jakarta.className} text-xs font-bold uppercase tracking-widest text-black sm:text-sm`}
+                >
                   GRAFIK PRODUK TERJUAL
                 </span>
-                <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="h-4 w-4 text-black transition-transform group-hover:translate-x-1" />
               </button>
             </div>
-
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:rounded-md ${
-        isActive ? "text-white" : "text-gray-500 hover:text-gray-300"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm font-medium">{label}</span>
-    </Link>
   );
 }

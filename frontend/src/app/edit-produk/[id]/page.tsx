@@ -4,11 +4,11 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, Save } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 // Helper untuk mengubah file gambar jadi Base64 String
 const fileToBase64 = (file: File): Promise<string> => {
@@ -167,7 +167,7 @@ export default function EditProduk({ params }: { params: Promise<{ id: string }>
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
-        <p className={`${mono.className} text-xs tracking-widest text-black/50 animate-pulse`}>
+        <p className={`${jakarta.className} text-xs tracking-widest text-black/50 animate-pulse`}>
           MEMUAT DATA PRODUK...
         </p>
       </div>
@@ -175,7 +175,8 @@ export default function EditProduk({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className={`min-h-screen bg-[#FAF9F6] ${inter.className}`}>
+    <div className={`min-h-screen bg-[#FAF9F6] ${jakarta.className} md:pl-56`}>      <Navbar variant="seller" />
+
       {/* Header */}
       <div className="bg-white border-b border-black/10 px-6 py-6 sticky top-0 z-20 flex items-center gap-4">
         <Link href="/produk-seller" className="p-2 border border-black/15 rounded-sm hover:bg-black/5 transition text-black">
@@ -183,7 +184,7 @@ export default function EditProduk({ params }: { params: Promise<{ id: string }>
         </Link>
         <div>
           <h1 className={`${playfair.className} text-xl sm:text-2xl font-bold text-black`}>Edit Produk</h1>
-          <p className={`${mono.className} text-[10px] text-black/40 mt-1 uppercase tracking-widest`}>
+          <p className={`${jakarta.className} text-[10px] text-black/40 mt-1 uppercase tracking-widest`}>
             ID: {id} • Update Information
           </p>
         </div>

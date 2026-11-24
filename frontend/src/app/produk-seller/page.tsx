@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Package, ShoppingBag, User, Plus, PackageSearch, Trash2, X, Eye } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { useRouter } from "next/navigation";
+import { Plus, PackageSearch, Trash2, X, Eye } from "lucide-react";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 // Tipe data di-update biar mencakup deskripsi, dimensi, dan defect
 type Produk = {
@@ -108,22 +108,15 @@ export default function ProdukSeller() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-      {/* Sidebar */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3 relative z-10">
-        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/pesanan-seller" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className="min-h-screen bg-[#FAF9F6] md:pl-56">
+      <Navbar variant="seller" />
 
       {/* Content */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col relative`}>
+      <div className={`${jakarta.className} flex min-h-screen flex-col relative`}>
         <div className="px-5 sm:px-10 py-6 border-b border-black/10 bg-white">
-          <p className={`${mono.className} text-[10px] tracking-[0.25em] text-black/40 mb-2`}>
+          <p className={`${jakarta.className} text-[10px] tracking-[0.25em] text-black/40 mb-2`}>
             THE ARCHIVE · SELLER PANEL
-          </p>
-          <h1 className={`${playfair.className} text-2xl sm:text-3xl font-semibold tracking-tight text-black`}>
+          </p>          <h1 className={`${playfair.className} text-2xl sm:text-3xl font-semibold tracking-tight text-black`}>
             Product Management
           </h1>
         </div>
@@ -141,7 +134,7 @@ export default function ProdukSeller() {
               <h2 className="text-xs font-semibold tracking-[0.15em] text-black/70">
                 PUBLISHED PRODUCTS
               </h2>
-              <p className={`${mono.className} text-[11px] text-black/40`}>
+              <p className={`${jakarta.className} text-[11px] text-black/40`}>
                 {String(products.length).padStart(2, "0")} ITEMS
               </p>
             </div>
@@ -245,7 +238,7 @@ function ProductRow({
             </span>
           </div>
           <p className="text-sm text-black/60 mt-0.5">{formatRupiah(product.harga)}</p>
-          <p className={`${mono.className} text-[10px] text-black/35 mt-1`}>
+          <p className={`${jakarta.className} text-[10px] text-black/35 mt-1`}>
             STOCK {String(product.stok).padStart(2, "0")}
           </p>
         </div>
@@ -350,30 +343,5 @@ function ProductDetailModal({ product, onClose }: { product: Produk; onClose: ()
 
       </div>
     </div>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:rounded-md ${
-        isActive ? "text-white" : "text-gray-500 hover:text-gray-300"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm font-medium">{label}</span>
-    </Link>
   );
 }
