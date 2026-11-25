@@ -4,12 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Package } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 type StatusPesanan =
   | "PENDING"
@@ -154,7 +154,10 @@ function DetailPesananContent() {
   const bisaDiputuskan = data?.statusPesanan === "PENDING";
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-[#FAF9F6]`}>
+    <div className={`${jakarta.className} min-h-screen bg-[#FAF9F6] md:pl-56`}>
+      <Navbar variant="seller" />
+
+      <div className="flex min-h-screen flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 sm:px-8 py-5 border-b border-black">
         <Link href="/pesanan-seller">
@@ -169,7 +172,7 @@ function DetailPesananContent() {
         <div className="w-full md:max-w-xl md:mx-auto pb-8">
           {isLoading ? (
             <p
-              className={`${mono.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
+              className={`${jakarta.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
             >
               Memuat detail pesanan...
             </p>
@@ -318,6 +321,7 @@ function DetailPesananContent() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

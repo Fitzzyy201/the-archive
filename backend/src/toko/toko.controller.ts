@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { TokoService } from './toko.service';
 import { CreateTokoDto } from './dto/create-toko.dto';
+import { UpdateTokoDto } from './dto/update-toko.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -60,14 +61,7 @@ export class TokoController {
   async updateTokoDetail(
     @Request() req,
     @Param('id') id: string,
-    @Body()
-    body: {
-      namaToko?: string;
-      noToko?: string;
-      kota?: string;
-      email?: string;
-      fotoToko?: string;
-    },
+    @Body() body: UpdateTokoDto,
   ) {
     return this.tokoService.updateTokoDetail(+id, body, req.user.sub);
   }

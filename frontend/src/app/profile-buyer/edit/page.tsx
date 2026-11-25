@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, Loader2 } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { getProductImageUrl } from "@/utils/image";
+import { normalizePhoneInput, isValidPhone } from "@/utils/phone";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -67,7 +68,7 @@ export default function EditProfileBuyer() {
           const data = await res.json();
           setForm({
             nama: data.nama || "",
-            noTelp: data.noTelp || "",
+            noTelp: normalizePhoneInput(data.noTelp || ""),
             email: data.email || "",
           });
           if (data.fotoProfil) setFotoPreview(data.fotoProfil);
@@ -110,6 +111,14 @@ export default function EditProfileBuyer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidPhone(form.noTelp)) {
+      alert(
+        "Nomor telepon harus diawali +62 dan berjumlah 10-14 digit angka. Contoh: +6281234567890"
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -221,14 +230,14 @@ export default function EditProfileBuyer() {
 
             <div>
               <label className={`${mono.className} text-[10px] font-bold tracking-widest text-black/40 uppercase block mb-1`}>
-                NO. TELEPON (WHATSAPP)
-              </label>
-              <input
-                type="text"
-                value={form.noTelp}
-                onChange={(e) => setForm({ ...form, noTelp: e.target.value })}
+          NO. TELEPON (+62)
+        </label>
+        <input
+          type="tel"
+          value={form.noTelp}
+          onChange={(e) => setForm({ ...form, noTelp: normalizePhoneInput(e.target.value) })}
+          placeholder="+6281234567890"
                 className="w-full text-base font-bold text-black border-b border-black/20 bg-transparent py-1 focus:outline-none focus:border-black"
-                placeholder="08123456789"
                 required
               />
             </div>

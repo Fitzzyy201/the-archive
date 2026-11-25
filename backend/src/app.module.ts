@@ -19,6 +19,8 @@ import { AlamatModule } from './alamat/alamat.module';
 import { KategoriModule } from './kategori/kategori.module';
 import { UlasanModule } from './ulasan/ulasan.module';
 import { KeuanganModule } from './keuangan/keuangan.module';
+import { PenjualanModule } from './penjualan/penjualan.module';
+import { WilayahModule } from './wilayah/wilayah.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { KeuanganModule } from './keuangan/keuangan.module';
     KategoriModule,
     UlasanModule,
     KeuanganModule,
+    PenjualanModule,
+    WilayahModule,
     ScheduleModule.forRoot(),
     MailerModule.forRoot({
       transport: {

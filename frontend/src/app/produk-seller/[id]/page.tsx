@@ -12,11 +12,10 @@ import {
   Star,
   PackageX,
 } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 type ProdukDetail = {
   id: number;
@@ -153,7 +152,7 @@ export default function DetailProduk() {
       : 0;
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-[#FAF9F6] text-black`}>
+    <div className={`${jakarta.className} min-h-screen flex flex-col bg-[#FAF9F6] text-black`}>
       <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-black bg-white">
         <button onClick={() => router.back()}>
           <ArrowLeft className="w-5 h-5 text-black" />
@@ -171,7 +170,7 @@ export default function DetailProduk() {
       <div className="flex-1 w-full md:max-w-xl md:mx-auto pb-44">
         {isLoading ? (
           <p
-            className={`${mono.className} text-center text-xs text-black/40 py-24 tracking-widest uppercase`}
+            className={`${jakarta.className} text-center text-xs text-black/40 py-24 tracking-widest uppercase`}
           >
             Memuat produk...
           </p>
@@ -218,7 +217,7 @@ export default function DetailProduk() {
             </div>
             <div className="grid grid-cols-2 gap-4 px-6 py-5 border-b border-black/10">
               <div>
-                <p className={`${mono.className} text-[10px] tracking-[0.2em] text-black/60 mb-3`}>
+                <p className={`${jakarta.className} text-[10px] tracking-[0.2em] text-black/60 mb-3`}>
                   SIZE
                 </p>
                 <span className="inline-block border border-black px-3 py-2 text-sm">
@@ -226,7 +225,7 @@ export default function DetailProduk() {
                 </span>
               </div>
               <div>
-                <p className={`${mono.className} text-[10px] tracking-[0.2em] text-black/60 mb-3`}>
+                <p className={`${jakarta.className} text-[10px] tracking-[0.2em] text-black/60 mb-3`}>
                   STOCK
                 </p>
                 <p className="text-sm">{produk.stok > 0 ? `${produk.stok} tersedia` : "Habis"}</p>
@@ -234,7 +233,7 @@ export default function DetailProduk() {
             </div>
 
             <div className="px-6 py-5 border-b border-black/10">
-              <p className={`${mono.className} text-[10px] tracking-[0.2em] text-black/60 mb-4`}>
+              <p className={`${jakarta.className} text-[10px] tracking-[0.2em] text-black/60 mb-4`}>
                 CONDITION REPORT
               </p>
               <p className="text-sm font-semibold mb-2">

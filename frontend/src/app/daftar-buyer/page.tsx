@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { normalizePhoneInput, isValidPhone } from "@/utils/phone";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
 });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 const DAFTAR_KOTA = [
   "Bangkalan",
@@ -120,6 +125,7 @@ export default function DaftarBuyer() {
   const [showPassword, setShowPassword] = useState(false);
   const [nama, setNama] = useState("");
   const [telepon, setTelepon] = useState("");
+  const [kotaList, setKotaList] = useState<string[]>(DAFTAR_KOTA);
   const [kota, setKota] = useState("");
   const [alamat, setAlamat] = useState("");
   const [catatan, setCatatan] = useState("");
@@ -148,17 +154,38 @@ export default function DaftarBuyer() {
 
   const passwordStrength = getPasswordStrength(password);
 
-  const kotaTersaring = DAFTAR_KOTA.filter((item) =>
+  const kotaTersaring = kotaList.filter((item) =>
     item.toLowerCase().includes(kota.toLocaleLowerCase())
   );
 
   const router = useRouter();
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/wilayah/regencies`);
+        if (!res.ok) return;
+        const data: { name: string }[] = await res.json();
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setKotaList(data.map((r) => r.name));
+        }
+      } catch {
+        // API wilayah gagal: pakai daftar statis
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleDaftar = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (telepon.length < 10) {
-      alert("Nomor telepon minimal 10 digit angka.");
+    if (!isValidPhone(telepon)) {
+      alert(
+        "Nomor telepon harus diawali +62 dan berjumlah 10-14 digit angka. Contoh: +6281234567890"
+      );
       return;
     }
 
@@ -205,14 +232,14 @@ export default function DaftarBuyer() {
       <Navbar />
 
       <main
-        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+        className={`${jakarta.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
       >
         <div className="w-full max-w-md lg:max-w-lg mx-auto">
           {/* Header Card */}
           <div className="text-center mb-8">
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
+              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition"
             >
               <ArrowLeft className="w-4 h-4" /> KEMBALI
             </button>
@@ -231,7 +258,7 @@ export default function DaftarBuyer() {
             <form className="space-y-5" onSubmit={handleDaftar}>
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   EMAIL
                 </label>
@@ -247,7 +274,7 @@ export default function DaftarBuyer() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   PASSWORD
                 </label>
@@ -277,11 +304,11 @@ export default function DaftarBuyer() {
                 {/* Password Strength Indicator */}
                 {password.length > 0 && (
                   <div className="mt-2 space-y-1.5">
-                    <div className="flex items-center justify-between text-[9px]">
-                      <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className={`${jakarta.className} tracking-wide text-black/50 uppercase`}>
                         KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
                       </span>
-                      <span className={`${mono.className} text-black/40`}>
+                      <span className={`${jakarta.className} text-black/40`}>
                         {password.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
                       </span>
                     </div>
@@ -296,7 +323,7 @@ export default function DaftarBuyer() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   NAMA LENGKAP
                 </label>
@@ -311,24 +338,23 @@ export default function DaftarBuyer() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
-                  NOMOR TELEPON (ANGKA)
+                  NOMOR TELEPON (+62)
                 </label>
                 <input
                   type="tel"
-                  inputMode="numeric"
                   required
                   value={telepon}
-                  onChange={(e) => setTelepon(e.target.value.replace(/\D/g, ""))}
-                  placeholder="081234567890"
+                  onChange={(e) => setTelepon(normalizePhoneInput(e.target.value))}
+                  placeholder="+6281234567890"
                   className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                 />
               </div>
 
               <div className="relative">
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   KOTA
                 </label>
@@ -356,7 +382,7 @@ export default function DaftarBuyer() {
                             setKota(item);
                             setIsDropdownOpen(false);
                           }}
-                          className="px-4 py-2.5 text-xs text-black/80 hover:bg-[#FAF9F6] hover:text-black cursor-pointer transition font-sans"
+                          className="px-4 py-2.5 text-xs text-black/80 hover:bg-[#FAF9F6] hover:text-black cursor-pointer transition"
                         >
                           {item}
                         </li>
@@ -367,7 +393,7 @@ export default function DaftarBuyer() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   ALAMAT LENGKAP
                 </label>
@@ -382,7 +408,7 @@ export default function DaftarBuyer() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[11px] font-semibold tracking-[0.12em] text-black/70 mb-2 uppercase`}
                 >
                   CATATAN PENGIRIMAN (OPSIONAL)
                 </label>
@@ -398,7 +424,7 @@ export default function DaftarBuyer() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`${mono.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition mt-6 ${
+                className={`${jakarta.className} w-full bg-black text-white rounded-sm py-3.5 flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.15em] hover:bg-black/85 transition mt-6 ${
                   isLoading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
@@ -408,7 +434,7 @@ export default function DaftarBuyer() {
             </form>
           </div>
 
-          <p className="text-center text-xs text-black/60 mt-6 font-sans">
+          <p className="text-center text-xs text-black/60 mt-6">
             Sudah memiliki akun?{" "}
             <Link
               href="/login"

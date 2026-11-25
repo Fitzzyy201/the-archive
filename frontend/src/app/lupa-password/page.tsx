@@ -3,16 +3,14 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mail, RefreshCw, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Eye, EyeOff } from "lucide-react";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
 
-const playfair = Playfair_Display({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
 export default function LupaPassword() {
   const router = useRouter();
@@ -147,35 +145,23 @@ export default function LupaPassword() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-black">
-      {/* Top Navbar */}
+    <div className="flex min-h-screen flex-col bg-[#FAF9F6] text-black">
       <Navbar />
 
       <main
-        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+        className={`${jakarta.className} flex flex-1 items-center justify-center px-4 pb-28 pt-10 sm:px-6 sm:pt-14 md:pb-20`}
       >
-        <div className="w-full max-w-md mx-auto">
+        <div className="w-full max-w-[440px]">
           {/* Header */}
-          <div className="text-center mb-8">
-            <button
-              onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 text-xs text-black/50 hover:text-black mb-4 transition font-mono"
-            >
-              <ArrowLeft className="w-4 h-4" /> KEMBALI
-            </button>
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-black/5 border border-black/10 rounded-full mb-3 text-black">
-              {step === 1 && <Mail className="w-6 h-6" />}
-              {step === 2 && <RefreshCw className="w-6 h-6" />}
-              {step === 3 && <KeyRound className="w-6 h-6" />}
-            </div>
+          <div className="mb-8 text-center sm:mb-9">
             <h1
-              className={`${playfair.className} text-3xl sm:text-4xl font-bold tracking-tight text-black mb-2`}
+              className={`${jakarta.className} text-[30px] font-bold leading-[1.15] tracking-tight text-black sm:text-4xl`}
             >
               {step === 1 && "Pulihkan Akun"}
               {step === 2 && "Verifikasi OTP"}
               {step === 3 && "Password Baru"}
             </h1>
-            <p className="text-black/50 text-xs sm:text-sm leading-relaxed">
+            <p className="mx-auto mt-3 max-w-[340px] text-[13px] leading-relaxed text-black/50 sm:text-sm">
               {step === 1 && "Masukkan email terdaftar Anda untuk menerima kode OTP 6 digit."}
               {step === 2 && `Masukkan 6 digit kode OTP yang kami kirimkan ke ${email}`}
               {step === 3 && "Buat kata sandi baru yang aman untuk akun The Archive Anda."}
@@ -183,13 +169,11 @@ export default function LupaPassword() {
           </div>
 
           {/* Form Card */}
-          <div className="bg-white border border-black/10 rounded-sm p-6 sm:p-8 shadow-sm">
+          <div className="rounded-sm border border-black/[0.08] bg-white p-6 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.45)] sm:p-8">
             {step === 1 && (
-              <form onSubmit={handleRequestOtp} className="space-y-5">
+              <form onSubmit={handleRequestOtp} className="space-y-6">
                 <div>
-                  <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
-                  >
+                  <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/60">
                     ALAMAT EMAIL TERDAFTAR
                   </label>
                   <input
@@ -198,14 +182,14 @@ export default function LupaPassword() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="nama@email.com"
-                    className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
+                    className="mt-2 w-full border-b border-black/15 bg-transparent px-0.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-black/30 focus:border-black"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50 mt-4"
+                  className="w-full rounded-sm bg-black py-3.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? "MEMPROSES..." : "KIRIM KODE OTP"}
                 </button>
@@ -214,7 +198,7 @@ export default function LupaPassword() {
 
             {step === 2 && (
               <form onSubmit={handleVerifyOtp} className="space-y-6 text-center">
-                <div className="flex justify-center gap-2 sm:gap-3">
+                <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
                   {otp.map((digit, index) => (
                     <input
                       key={index}
@@ -227,7 +211,7 @@ export default function LupaPassword() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className={`${playfair.className} w-11 h-14 sm:w-12 sm:h-16 border border-black/20 text-center text-xl font-bold text-black focus:border-black focus:outline-none transition rounded-sm bg-[#FAF9F6]/50`}
+                      className={`${jakarta.className} h-14 w-full min-w-0 rounded-sm border border-black/15 bg-[#FAF9F6]/60 text-center text-lg font-semibold text-black outline-none transition focus:border-black focus:bg-white sm:h-16 sm:text-xl`}
                       placeholder="•"
                     />
                   ))}
@@ -236,67 +220,68 @@ export default function LupaPassword() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50"
+                  className="w-full rounded-sm bg-black py-3.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? "MEMVERIFIKASI..." : "VERIFIKASI KODE"}
                 </button>
 
-                <div className="pt-2 text-xs text-black/50">
+                <p className="text-[12px] leading-relaxed text-black/50 sm:text-[13px]">
                   Tidak menerima kode?{" "}
                   <button
                     type="button"
                     onClick={handleRequestOtp}
-                    className="text-black font-semibold underline underline-offset-4 hover:text-black/70 uppercase"
+                    className="font-semibold text-black underline underline-offset-4 transition hover:text-black/60"
                   >
                     Kirim Ulang
                   </button>
-                </div>
+                </p>
               </form>
             )}
 
             {step === 3 && (
-              <form onSubmit={handleResetPassword} className="space-y-5">
+              <form onSubmit={handleResetPassword} className="space-y-6">
                 <div>
-                  <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
-                  >
+                  <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/60">
                     KATA SANDI BARU
                   </label>
-                  <div className="relative flex items-center">
+                  <div className="relative mt-2 flex items-center">
                     <input
                       type={showPassword ? "text" : "password"}
                       required
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full border-b border-black/20 px-1 py-2 pr-8 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
+                      className="w-full border-b border-black/15 bg-transparent px-0.5 py-2.5 pr-10 text-sm text-black outline-none transition-colors placeholder:text-black/30 focus:border-black"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-1 text-black/40 hover:text-black transition focus:outline-none"
+                      className="absolute right-0 flex h-9 w-9 items-center justify-center text-black/40 transition hover:text-black focus:outline-none"
                       title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
+                        <EyeOff className="h-4 w-4" />
                       ) : (
-                        <Eye className="w-4 h-4" />
+                        <Eye className="h-4 w-4" />
                       )}
                     </button>
                   </div>
 
                   {/* Password Strength Indicator */}
                   {newPassword.length > 0 && (
-                    <div className="mt-2 space-y-1.5">
-                      <div className="flex items-center justify-between text-[9px]">
-                        <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
-                          KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center justify-between gap-3 text-[11px]">
+                        <span className="uppercase tracking-wide text-black/50">
+                          KEKUATAN:{" "}
+                          <span className={`font-semibold ${passwordStrength.text}`}>
+                            {passwordStrength.label}
+                          </span>
                         </span>
-                        <span className={`${mono.className} text-black/40`}>
+                        <span className="shrink-0 text-black/40">
                           {newPassword.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-1.5 h-1">
+                      <div className="grid h-1.5 grid-cols-3 gap-1.5">
                         <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 1 ? passwordStrength.color : "bg-black/10"}`} />
                         <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 2 ? passwordStrength.color : "bg-black/10"}`} />
                         <div className={`rounded-full transition-all duration-300 ${passwordStrength.score >= 3 ? passwordStrength.color : "bg-black/10"}`} />
@@ -308,17 +293,17 @@ export default function LupaPassword() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-black text-white text-xs font-semibold tracking-wider uppercase py-3.5 rounded-sm hover:bg-black/85 transition disabled:opacity-50 mt-4"
+                  className="w-full rounded-sm bg-black py-3.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? "MENYIMPAN..." : "SIMPAN PASSWORD BARU"}
                 </button>
               </form>
             )}
 
-            <div className="mt-6 pt-6 border-t border-black/10 text-center">
+            <div className="mt-7 border-t border-black/10 pt-5 text-center">
               <Link
                 href="/login"
-                className="text-xs text-black/60 hover:text-black underline underline-offset-4 transition font-sans"
+                className="inline-flex text-[12px] font-medium text-black/55 underline-offset-4 transition hover:text-black hover:underline"
               >
                 Kembali ke Halaman Login
               </Link>

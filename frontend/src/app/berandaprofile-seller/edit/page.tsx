@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import Navbar from "@/components/Navbar";
+import WilayahSelect from "@/components/WilayahSelect";
+import { normalizePhoneInput, isValidPhone } from "@/utils/phone";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -50,7 +53,7 @@ export default function EditProfileSeller() {
             const data = await res.json();
             setForm({
               namaToko: data.namaToko || "THE DIARIES STORE",
-              noToko: data.noToko || "+62 812 3456 7890",
+              noToko: normalizePhoneInput(data.noTelp || "") || "+6281234567890",
               kota: data.kota || "JAKARTA",
               email: data.email || "hello@thediaries.com",
             });
@@ -77,6 +80,14 @@ export default function EditProfileSeller() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidPhone(form.noToko)) {
+      alert(
+        "Nomor telepon harus diawali +62 dan berjumlah 10-14 digit angka. Contoh: +6281234567890"
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -123,16 +134,20 @@ export default function EditProfileSeller() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
-        <p className={`${mono.className} text-xs tracking-widest text-black/40 animate-pulse uppercase`}>
-          Memuat Informasi Toko...
-        </p>
+      <div className="min-h-screen bg-[#FAF9F6] md:pl-56">
+        <Navbar variant="seller" />
+        <div className="flex items-center justify-center">
+          <p className={`${mono.className} text-xs tracking-widest text-black/40 animate-pulse uppercase`}>
+            Memuat Informasi Toko...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-[#FAF9F6] flex flex-col ${inter.className}`}>
+    <div className={`min-h-screen bg-[#FAF9F6] flex flex-col ${inter.className} md:pl-56`}>
+      <Navbar variant="seller" />
       {/* Top Header */}
       <div className="px-5 py-5 border-b border-black flex items-center relative bg-[#FAF9F6]">
         <Link href="/berandaprofile-seller" className="text-black hover:opacity-75 transition">
@@ -192,9 +207,10 @@ export default function EditProfileSeller() {
                 NO TOKO
               </label>
               <input
-                type="text"
+                type="tel"
                 value={form.noToko}
-                onChange={(e) => setForm({ ...form, noToko: e.target.value })}
+                onChange={(e) => setForm({ ...form, noToko: normalizePhoneInput(e.target.value) })}
+                placeholder="+6281234567890"
                 className="w-full text-base font-bold text-black border-b border-black/20 bg-transparent py-1 focus:outline-none focus:border-black"
                 required
               />
@@ -204,12 +220,12 @@ export default function EditProfileSeller() {
               <label className={`${mono.className} text-[10px] font-bold tracking-widest text-black/40 uppercase block mb-1`}>
                 KOTA
               </label>
-              <input
-                type="text"
+              <WilayahSelect
                 value={form.kota}
-                onChange={(e) => setForm({ ...form, kota: e.target.value })}
+                onChange={(kota) => setForm({ ...form, kota })}
                 className="w-full text-base font-bold text-black border-b border-black/20 bg-transparent py-1 focus:outline-none focus:border-black uppercase"
                 required
+                placeholderKota="Pilih kota toko"
               />
             </div>
 

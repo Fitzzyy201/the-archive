@@ -155,7 +155,7 @@ export class CheckoutService {
         customerDetails: {
           firstName: buyer.nama || buyer.email,
           email: buyer.email,
-          phone: buyer.noTelp,
+          phone: buyer.noTelp?.replace('+', ''),
         },
         itemDetails,
         callbacks: {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Loader2, Check } from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import WilayahSelect from "@/components/WilayahSelect";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500", "600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
@@ -191,13 +192,12 @@ export default function AlamatPage() {
               <label className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}>
                 KOTA
               </label>
-              <input
-                type="text"
-                required
+              <WilayahSelect
                 value={form.kotaPenerima}
-                onChange={(e) => setForm({ ...form, kotaPenerima: e.target.value })}
-                placeholder="Contoh: Bandung"
+                onChange={(kota) => setForm({ ...form, kotaPenerima: kota })}
                 className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black bg-transparent"
+                required
+                placeholderKota="Contoh: Bandung"
               />
             </div>
 

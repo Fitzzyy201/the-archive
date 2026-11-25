@@ -2,21 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
-  Home,
   Package,
-  ShoppingBag,
-  User,
   History,
 } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 import { getProductImageUrl } from "@/utils/image";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 type StatusPesanan =
   | "PENDING"
@@ -107,22 +103,11 @@ export default function RiwayatPesanan() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAF9F6]">
-      {/* Sidebar (desktop) / Bottom Nav (mobile) */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem
-          href="/seller/pesanan"
-          icon={<ShoppingBag className="w-5 h-5" />}
-          label="PESANAN"
-          active
-        />
-        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className="min-h-screen bg-[#FAF9F6] md:pl-56">
+      <Navbar variant="seller" />
 
       {/* Main content */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+      <div className={`${jakarta.className} flex min-h-screen flex-col`}>
         {/* Header */}
         <div className="flex items-center gap-4 px-5 sm:px-8 py-5 bg-white border-b border-black">
           <Link href="/pesanan-seller">
@@ -142,7 +127,7 @@ export default function RiwayatPesanan() {
 
             {isLoading ? (
               <p
-                className={`${mono.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
+                className={`${jakarta.className} text-center text-xs text-black/40 py-16 tracking-widest uppercase`}
               >
                 Memuat riwayat...
               </p>
@@ -156,7 +141,7 @@ export default function RiwayatPesanan() {
                   ))}
                 </div>
                 <p
-                  className={`${mono.className} text-center text-[11px] tracking-[0.25em] text-black/25 mt-12`}
+                  className={`${jakarta.className} text-center text-[11px] tracking-[0.25em] text-black/25 mt-12`}
                 >
                   END OF HISTORY
                 </p>
@@ -190,7 +175,7 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
     <div className="py-6 border-b border-black/10 first:pt-0">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className={`${mono.className} text-sm font-semibold tracking-wide text-black`}>
+          <p className={`${jakarta.className} text-sm font-semibold tracking-wide text-black`}>
             {kodePesanan(item)}
           </p>
           <p className="text-[11px] tracking-wide text-black/55 mt-1">
@@ -243,32 +228,5 @@ function RiwayatCard({ item }: { item: RiwayatItem }) {
         </Link>
       </div>
     </div>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-  active = false,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  const pathname = usePathname();
-  const isActive = active || pathname.startsWith(href);
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 transition md:px-6 md:py-3 md:rounded-md ${
-        isActive ? "text-white font-semibold" : "text-white/40 hover:text-white/70"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm tracking-wide">{label}</span>
-    </Link>
   );
 }

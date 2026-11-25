@@ -200,8 +200,17 @@ export class PesananService {
           select: {
             id: true,
             nama: true,
+            username: true,
             email: true,
             noTelp: true,
+            alamatPengiriman: {
+              select: {
+                namaPenerima: true,
+                kotaPenerima: true,
+                alamatLengkap: true,
+              },
+              take: 1,
+            },
           },
         },
         detail: {

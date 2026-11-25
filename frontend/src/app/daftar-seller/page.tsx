@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -11,15 +11,17 @@ import {
   EyeOff,
   Store,
 } from "lucide-react";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { normalizePhoneInput, isValidPhone } from "@/utils/phone";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
 });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 const DAFTAR_KOTA = [
   "Bangkalan",
@@ -135,8 +137,28 @@ export default function RegistrasiSeller() {
   const [npwpFile, setNpwpFile] = useState<File | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [kotaList, setKotaList] = useState<string[]>(DAFTAR_KOTA);
 
-  const kotaTersaring = DAFTAR_KOTA.filter((item) =>
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/wilayah/regencies`);
+        if (!res.ok) return;
+        const data: { name: string }[] = await res.json();
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setKotaList(data.map((r) => r.name));
+        }
+      } catch {
+        // API wilayah gagal: pakai daftar statis
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const kotaTersaring = kotaList.filter((item) =>
     item.toLowerCase().includes(city.toLowerCase())
   );
 
@@ -166,8 +188,10 @@ export default function RegistrasiSeller() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (phone.length < 10) {
-      alert("Nomor telepon minimal 10 digit angka.");
+    if (!isValidPhone(phone)) {
+      alert(
+        "Nomor telepon harus diawali +62 dan berjumlah 10-14 digit angka. Contoh: +6281234567890"
+      );
       return;
     }
 
@@ -220,7 +244,7 @@ export default function RegistrasiSeller() {
       <Navbar />
 
       <main
-        className={`${inter.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
+        className={`${jakarta.className} flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-10 md:py-16 pb-28 md:pb-16 flex items-center justify-center`}
       >
         <div className="w-full max-w-lg lg:max-w-xl mx-auto">
           <div className="text-center mb-8">
@@ -247,7 +271,7 @@ export default function RegistrasiSeller() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   NAMA TOKO
                 </label>
@@ -263,7 +287,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   EMAIL TOKO / AKUN
                 </label>
@@ -279,7 +303,7 @@ export default function RegistrasiSeller() {
 
               <div className="relative">
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   KOTA ASAL TOKO (PULAU JAWA)
                 </label>
@@ -317,23 +341,22 @@ export default function RegistrasiSeller() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
-                    NOMOR TELEPON (ANGKA)
+                    NOMOR TELEPON (+62)
                   </label>
                   <input
                     type="tel"
-                    inputMode="numeric"
                     required
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="081234567890"
+                    onChange={(e) => setPhone(normalizePhoneInput(e.target.value))}
+                    placeholder="+6281234567890"
                     className="w-full border-b border-black/20 px-1 py-2 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-black transition bg-transparent"
                   />
                 </div>
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NOMOR REKENING (ANGKA)
                   </label>
@@ -352,7 +375,7 @@ export default function RegistrasiSeller() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NIK / KTP (16 DIGIT)
                   </label>
@@ -369,7 +392,7 @@ export default function RegistrasiSeller() {
                 </div>
                 <div>
                   <label
-                    className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                    className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                   >
                     NPWP (ANGKA)
                   </label>
@@ -387,7 +410,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   PASSWORD
                 </label>
@@ -417,10 +440,10 @@ export default function RegistrasiSeller() {
                 {password.length > 0 && (
                   <div className="mt-2 space-y-1.5">
                     <div className="flex items-center justify-between text-[9px]">
-                      <span className={`${mono.className} tracking-wider text-black/50 uppercase`}>
+                      <span className={`${jakarta.className} tracking-wider text-black/50 uppercase`}>
                         KEKUATAN: <span className={`font-semibold ${passwordStrength.text}`}>{passwordStrength.label}</span>
                       </span>
-                      <span className={`${mono.className} text-black/40`}>
+                      <span className={`${jakarta.className} text-black/40`}>
                         {password.length >= 8 ? "✓ Min. 8 Karakter" : "Min. 8 Karakter"}
                       </span>
                     </div>
@@ -435,7 +458,7 @@ export default function RegistrasiSeller() {
 
               <div>
                 <label
-                  className={`${mono.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
+                  className={`${jakarta.className} block text-[10px] font-semibold tracking-widest text-black/70 mb-2 uppercase`}
                 >
                   DOKUMEN VERIFIKASI IDENTITAS
                 </label>

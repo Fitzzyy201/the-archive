@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TarikDanaDto } from './dto/tarik-dana.dto';
+import { JenisTransaksi } from '@prisma/client';
 
 @Injectable()
 export class KeuanganService {
@@ -30,5 +32,34 @@ export class KeuanganService {
       penarikanPending: null,
       riwayat,
     };
+  }
+
+  async tarikDana(tokoId: number, userId: number, dto: TarikDanaDto) {
+    const toko = await this.prisma.tokoSeller.findUnique({
+      where: { id: tokoId },
+    });
+
+    if (!toko) {
+      throw new NotFoundException('Toko tidak ditemukan');
+    }
+
+    if (dto.nominal > toko.saldoToko) {
+      throw new BadRequestException('Saldo tidak mencukupi');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.tokoSeller.update({
+        where: { id: tokoId },
+        data: { saldoToko: { decrement: dto.nominal } },
+      });
+
+      return await tx.logKeuangan.create({
+        data: {
+          userId,
+          jenisTransaksi: JenisTransaksi.PencairanSeller,
+          nominal: dto.nominal,
+        },
+      });
+    });
   }
 }

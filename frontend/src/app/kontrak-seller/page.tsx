@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Home, Package, ShoppingBag, User } from "lucide-react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export default function KontrakSeller() {
   const [agreed, setAgreed] = useState(false);
@@ -26,17 +27,11 @@ export default function KontrakSeller() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
-      {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
-      <div className="order-2 md:order-1 bg-black flex items-center justify-around md:flex-col md:justify-start md:items-stretch md:w-56 md:py-8 md:gap-2 py-3">
-        <NavItem href="/beranda-seller" icon={<Home className="w-5 h-5" />} label="BERANDA" />
-        <NavItem href="/produk-seller" icon={<Package className="w-5 h-5" />} label="PRODUK" />
-        <NavItem href="/seller/pesanan" icon={<ShoppingBag className="w-5 h-5" />} label="PESANAN" />
-        <NavItem href="/berandaprofile-seller" icon={<User className="w-5 h-5" />} label="PROFILE" />
-      </div>
+    <div className="min-h-screen bg-white md:pl-56">
+      <Navbar variant="seller" />
 
       {/* Main Content */}
-      <div className={`${inter.className} order-1 md:order-2 flex-1 flex flex-col`}>
+      <div className={`${jakarta.className} flex min-h-screen flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-center relative px-4 sm:px-8 py-4 border-b">
           <button onClick={() => router.back()} className="absolute left-4 sm:left-8">
@@ -124,30 +119,5 @@ export default function KontrakSeller() {
         </div>
       </div>
     </div>
-  );
-}
-
-function NavItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer transition md:px-6 md:py-3 md:rounded-md ${
-        isActive ? "text-white" : "text-gray-500 hover:text-gray-300"
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] md:text-sm font-medium">{label}</span>
-    </Link>
   );
 }
