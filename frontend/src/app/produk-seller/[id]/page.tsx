@@ -87,7 +87,7 @@ export default function DetailProduk() {
       }
 
       try {
-        const resUlasan = await fetch(`http://localhost:3001/produk/${produkId}/ulasan`);
+        const resUlasan = await fetch(`http://localhost:3001/ulasan/produk/${produkId}`);
         if (resUlasan.ok) {
           const data = await resUlasan.json();
           setUlasan(Array.isArray(data) ? data : []);

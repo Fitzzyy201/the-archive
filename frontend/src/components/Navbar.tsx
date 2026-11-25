@@ -25,6 +25,7 @@ const playfair = Playfair_Display({
 });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const BUYER_NAV_ITEMS = [
   { href: "/", icon: Home, label: "BERANDA" },
@@ -63,11 +64,22 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+    queueMicrotask(() => {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+      if (token && variant === "buyer") {
+        fetch(`${API_BASE}/notification/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => setUnreadCount(data.count ?? 0))
+          .catch(() => {});
+      }
+    });
+  }, [pathname, variant]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -259,6 +271,11 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
                   }`}
                 >
                   {item.label}
+                  {item.href === "/notifikasi" && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-3 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                   <span
                     className={`absolute -bottom-1 left-0 h-[1.5px] bg-black transition-all duration-300 ${
                       isActive ? "w-full" : "w-0 group-hover:w-full"
@@ -501,6 +518,11 @@ export default function Navbar({ onSearch, variant = "buyer" }: NavbarProps) {
                   }`}
                 />
                 <item.icon className="h-5 w-5" aria-hidden="true" />
+                {item.href === "/notifikasi" && unreadCount > 0 && (
+                  <span className="absolute top-2 right-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
                 <span className="text-[8px] uppercase tracking-[0.14em]">
                   {item.label}
                 </span>

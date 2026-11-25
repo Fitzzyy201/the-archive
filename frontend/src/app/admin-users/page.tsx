@@ -41,7 +41,10 @@ export default function AdminUsers() {
       setIsLoading(true);
       try {
         const role = activeTab === "BUYERS" ? "Buyer" : "Seller";
-        const res = await fetch(`http://localhost:3001/admin/users?role=${role}`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3001/admin/users?role=${role}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const data = await res.json();
           setUsers(Array.isArray(data) ? data : []);
@@ -64,9 +67,10 @@ export default function AdminUsers() {
     if (!confirm("Suspend akun ini?")) return;
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `http://localhost:3001/admin/users/${userId}/suspend`,
-        { method: "PATCH" }
+        { method: "PATCH", headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
         setUsers((prev) =>

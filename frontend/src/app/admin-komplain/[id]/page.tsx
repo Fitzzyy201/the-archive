@@ -64,7 +64,10 @@ export default function ComplaintResolution() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/admin/komplain/${komplainId}`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3001/admin/komplain/${komplainId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           setKomplain(await res.json());
         }
@@ -87,9 +90,13 @@ export default function ComplaintResolution() {
 
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`http://localhost:3001/admin/komplain/${komplainId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           statusKomplain: status,
           keputusanAdmin:

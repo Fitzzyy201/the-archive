@@ -47,7 +47,10 @@ export default function BuyerDetailPage() {
   useEffect(() => {
     const fetchBuyer = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/admin/users/${buyerId}`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3001/admin/users/${buyerId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           setBuyer(await res.json());
         }
@@ -67,9 +70,10 @@ export default function BuyerDetailPage() {
 
     setIsSuspending(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `http://localhost:3001/admin/users/${buyerId}/suspend`,
-        { method: "PATCH" }
+        { method: "PATCH", headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
         setBuyer({ ...buyer, statusAkun: "Suspend" });

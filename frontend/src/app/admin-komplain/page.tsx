@@ -44,7 +44,10 @@ export default function AdminKomplain() {
   useEffect(() => {
     const fetchKomplain = async () => {
       try {
-        const res = await fetch("http://localhost:3001/admin/komplain?status=pending");
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3001/admin/komplain?status=pending", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const data = await res.json();
           setItems(Array.isArray(data) ? data : []);

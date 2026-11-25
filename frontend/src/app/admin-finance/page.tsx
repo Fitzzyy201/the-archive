@@ -84,7 +84,10 @@ export default function AdminFinance() {
 
   const fetchFinance = async () => {
     try {
-      const res = await fetch("http://localhost:3001/admin/finance");
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:3001/admin/finance", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setBalance(data.escrowBalance ?? 0);
@@ -145,9 +148,13 @@ export default function AdminFinance() {
 
     setIsWithdrawing(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:3001/admin/finance/withdraw", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ nominal, rekeningTujuan: transferTo }),
       });
       if (res.ok) {

@@ -48,7 +48,10 @@ export default function StoreDetailsPage() {
   useEffect(() => {
     const fetchSeller = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/admin/users/${sellerId}`);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`http://localhost:3001/admin/users/${sellerId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           setSeller(await res.json());
         }
@@ -69,11 +72,15 @@ export default function StoreDetailsPage() {
 
     setIsSuspending(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `http://localhost:3001/admin/users/${sellerId}/suspend`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ alasan }),
         }
       );

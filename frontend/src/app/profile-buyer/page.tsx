@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Package,
   ArrowRight,
@@ -10,6 +11,7 @@ import {
 import { Inter, Playfair_Display } from "next/font/google";
 
 import Navbar from "@/components/Navbar";
+import { getProductImageUrl } from "@/utils/image";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,6 +38,7 @@ interface SellerProfile {
 }
 
 export default function ProfileSellerPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,12 +48,12 @@ export default function ProfileSellerPage() {
         const token = localStorage.getItem("token");
 
         if (!token) {
-          setProfile(null);
+          router.push("/login");
           return;
         }
 
         const response = await fetch(
-          "http://localhost:3001/auth/profile",
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/auth/profile`,
           {
             method: "GET",
             headers: {
@@ -60,12 +63,17 @@ export default function ProfileSellerPage() {
           }
         );
 
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+
         if (!response.ok) {
           throw new Error("Gagal mengambil data profile");
         }
 
         const data = await response.json();
-
         setProfile(data);
       } catch (error) {
         console.error("Error mengambil profile:", error);
@@ -76,7 +84,7 @@ export default function ProfileSellerPage() {
     };
 
     getProfile();
-  }, []);
+  }, [router]);
 
   const nama =
     profile?.nama ||
@@ -120,7 +128,7 @@ export default function ProfileSellerPage() {
                   <div className="h-full w-full animate-pulse bg-black/5" />
                 ) : foto ? (
                   <img
-                    src={foto}
+                    src={getProductImageUrl(foto)}
                     alt={nama || "Profile"}
                     className="h-full w-full object-cover"
                   />

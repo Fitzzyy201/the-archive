@@ -1,12 +1,14 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
   Query,
   Body,
   UseGuards,
+  Request,
   BadRequestException,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
@@ -70,8 +72,71 @@ export class AdminController {
     return this.adminService.getUsers();
   }
 
+  @Get('users/:id')
+  async getUserDetail(@Param('id') id: string) {
+    return this.adminService.getUserDetail(+id);
+  }
+
+  @Patch('users/:id/suspend')
+  async suspendUserPatch(@Param('id') id: string) {
+    return this.adminService.suspendUser(+id);
+  }
+
   @Delete('users/:id')
   async suspendUser(@Param('id') id: string) {
     return this.adminService.suspendUser(+id);
+  }
+
+  @Get('komplain')
+  async getKomplainList(@Query('status') status?: string) {
+    return this.adminService.getKomplainList(status);
+  }
+
+  @Get('komplain/:id')
+  async getKomplainDetail(@Param('id') id: string) {
+    return this.adminService.getKomplainDetail(+id);
+  }
+
+  @Patch('komplain/:id')
+  async decideKomplain(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('statusKomplain') statusKomplain: string,
+    @Body('keputusanAdmin') keputusanAdmin: string,
+  ) {
+    if (statusKomplain !== 'Disetujui' && statusKomplain !== 'Ditolak') {
+      throw new BadRequestException(
+        'statusKomplain harus Disetujui atau Ditolak',
+      );
+    }
+
+    if (!keputusanAdmin || !keputusanAdmin.trim()) {
+      throw new BadRequestException('keputusanAdmin wajib diisi');
+    }
+
+    return this.adminService.decideKomplain(
+      +id,
+      req.user.sub,
+      statusKomplain as 'Disetujui' | 'Ditolak',
+      keputusanAdmin,
+    );
+  }
+
+  @Get('finance')
+  async getFinance() {
+    return this.adminService.getFinance();
+  }
+
+  @Post('finance/withdraw')
+  async withdrawAdmin(
+    @Request() req,
+    @Body('nominal') nominal: number,
+    @Body('rekeningTujuan') rekeningTujuan: string,
+  ) {
+    return this.adminService.withdrawAdmin(
+      req.user.sub,
+      Number(nominal),
+      rekeningTujuan,
+    );
   }
 }
