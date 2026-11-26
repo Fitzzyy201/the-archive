@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 type MonthlyReport = {
   grossRevenue: number;
@@ -35,7 +41,7 @@ function formatRupiah(angka: number) {
 export default function MonthlyReportPage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-11
+  const [month, setMonth] = useState(today.getMonth());
   const [report, setReport] = useState<MonthlyReport>(emptyReport);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,12 +56,15 @@ export default function MonthlyReportPage() {
   useEffect(() => {
     const fetchReport = async () => {
       setIsLoading(true);
+
       try {
         const res = await fetch(
           `http://localhost:3001/admin/monthly-report?year=${year}&month=${month + 1}`
         );
+
         if (res.ok) {
           const data = await res.json();
+
           setReport({
             grossRevenue: data.grossRevenue ?? 0,
             completedTx: data.completedTx ?? 0,
@@ -90,6 +99,7 @@ export default function MonthlyReportPage() {
 
   const nextMonth = () => {
     if (isCurrentMonth) return;
+
     if (month === 11) {
       setMonth(0);
       setYear((y) => y + 1);
@@ -115,7 +125,7 @@ export default function MonthlyReportPage() {
 
   return (
     <div
-      className={`${inter.className} flex min-h-screen flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] text-black selection:bg-black selection:text-white lg:pl-64 lg:pb-0`}
+      className={`${jakarta.className} flex min-h-screen flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] text-black selection:bg-black selection:text-white lg:pl-64 lg:pb-0`}
     >
       <Navbar variant="admin" />
 
@@ -128,21 +138,19 @@ export default function MonthlyReportPage() {
             <span className="flex h-9 w-9 items-center justify-center border border-black/15 transition-colors duration-200 group-hover:border-black group-hover:bg-black group-hover:text-white group-focus-visible:border-black group-focus-visible:bg-black group-focus-visible:text-white">
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
             </span>
-            <span
-              className={`${mono.className} hidden text-[9px] uppercase tracking-[0.22em] text-black/50 transition-colors duration-200 group-hover:text-black sm:inline`}
-            >
+
+            <span className="hidden text-[9px] font-medium uppercase tracking-[0.22em] text-black/50 transition-colors duration-200 group-hover:text-black sm:inline">
               Back
             </span>
           </Link>
 
           <div className="justify-self-center text-center">
-            <p
-              className={`${mono.className} text-[7px] uppercase tracking-[0.32em] text-black/35 sm:text-[8px]`}
-            >
-              The Archive · Admin
+            <p className="text-[7px] font-medium uppercase tracking-[0.32em] text-black/35 sm:text-[8px]">
+              The Archive
             </p>
+
             <h1
-              className={`${playfair.className} mt-0.5 text-[15px] font-bold uppercase leading-none tracking-[0.12em] text-black sm:text-lg`}
+              className={`${playfair.className} mt-0.5 text-[15px] font-bold uppercase leading-none tracking-[0.12em] text-black sm:text-base`}
             >
               Monthly Report
             </h1>
@@ -154,11 +162,10 @@ export default function MonthlyReportPage() {
             aria-label="Export monthly report to PDF"
             className="group inline-flex items-center gap-2.5 justify-self-end rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
           >
-            <span
-              className={`${mono.className} hidden text-[9px] uppercase tracking-[0.22em] text-black/50 transition-colors duration-200 group-hover:text-black sm:inline`}
-            >
+            <span className="hidden text-[9px] font-medium uppercase tracking-[0.22em] text-black/50 transition-colors duration-200 group-hover:text-black sm:inline">
               Export
             </span>
+
             <span className="flex h-9 w-9 items-center justify-center border border-black bg-black text-white transition-colors duration-200 group-hover:bg-white group-hover:text-black group-focus-visible:bg-white group-focus-visible:text-black">
               <Download className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
             </span>
@@ -168,33 +175,20 @@ export default function MonthlyReportPage() {
 
       <main className="w-full flex-1">
         <div className="mx-auto w-full max-w-3xl px-5 pb-16 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:max-w-5xl xl:max-w-7xl 2xl:max-w-[84rem]">
-          <div className="flex items-center justify-between border-b border-black/10 pb-3">
-            <span
-              className={`${mono.className} text-[8px] uppercase tracking-[0.22em] text-black/40`}
-            >
-              The Archive · Monthly Ledger
-            </span>
-            <span
-              className={`${mono.className} text-[8px] uppercase tracking-[0.22em] text-black/40`}
-            >
-              Admin / {year}
-            </span>
-          </div>
-
-          <section className="pt-8 sm:pt-10">
+          <section className="pt-2 sm:pt-4">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className={`${mono.className} text-[9px] text-black/30`}>
+                <span className="text-[9px] font-medium text-black/30">
                   01
                 </span>
+
                 <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/55">
                   Period
                 </span>
               </div>
+
               {isCurrentMonth && (
-                <span
-                  className={`${mono.className} inline-flex items-center gap-1.5 text-[8px] uppercase tracking-[0.2em] text-black/40`}
-                >
+                <span className="inline-flex items-center gap-1.5 text-[8px] font-medium uppercase tracking-[0.2em] text-black/40">
                   <span className="h-1.5 w-1.5 bg-black" aria-hidden="true" />
                   Current
                 </span>
@@ -202,11 +196,10 @@ export default function MonthlyReportPage() {
             </div>
 
             <div className="flex items-end justify-between gap-3 border-b border-black pb-5 sm:gap-4">
-              <h2
-                className={`${playfair.className} text-2xl font-bold leading-none tracking-tight text-black sm:text-4xl lg:text-5xl`}
-              >
+              <h2 className="text-2xl font-semibold leading-none tracking-tight text-black sm:text-4xl lg:text-5xl">
                 {periodLabel}
               </h2>
+
               <div className="flex shrink-0 items-center gap-2">
                 <button
                   onClick={prevMonth}
@@ -219,6 +212,7 @@ export default function MonthlyReportPage() {
                     aria-hidden="true"
                   />
                 </button>
+
                 <button
                   onClick={nextMonth}
                   disabled={isCurrentMonth}
@@ -241,14 +235,12 @@ export default function MonthlyReportPage() {
               aria-live="polite"
             >
               <span className="h-px w-14 animate-pulse bg-black/30" />
-              <p
-                className={`${mono.className} text-[10px] uppercase tracking-[0.3em] text-black/40`}
-              >
+
+              <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-black/40">
                 Memuat data...
               </p>
-              <p
-                className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/20`}
-              >
+
+              <p className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/20">
                 Preparing monthly ledger
               </p>
             </div>
@@ -257,23 +249,21 @@ export default function MonthlyReportPage() {
               <section className="pt-10 sm:pt-14">
                 <div className="mb-4 flex items-baseline justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className={`${mono.className} text-[9px] text-black/30`}>
+                    <span className="text-[9px] font-medium text-black/30">
                       02
                     </span>
+
                     <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/55">
                       Total Gross Revenue
                     </span>
                   </div>
-                  <span
-                    className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/30`}
-                  >
+
+                  <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/30">
                     IDR
                   </span>
                 </div>
 
-                <p
-                  className={`${playfair.className} break-words text-[clamp(2rem,9vw,4.5rem)] font-bold leading-[1.02] tracking-[-0.03em] text-black`}
-                >
+                <p className="break-words text-[clamp(2rem,9vw,4.5rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-black">
                   {formatRupiah(report.grossRevenue)}
                 </p>
 
@@ -282,9 +272,8 @@ export default function MonthlyReportPage() {
                     Gross value of completed transactions recorded during the
                     selected period.
                   </p>
-                  <span
-                    className={`${mono.className} hidden shrink-0 text-right text-[8px] uppercase leading-relaxed tracking-[0.18em] text-black/30 sm:block`}
-                  >
+
+                  <span className="hidden shrink-0 text-right text-[8px] font-medium uppercase leading-relaxed tracking-[0.18em] text-black/30 sm:block">
                     Source
                     <br />
                     Admin Ledger
@@ -296,22 +285,19 @@ export default function MonthlyReportPage() {
                 <div className="grid grid-cols-2">
                   <div className="py-6 pr-5 sm:py-7 sm:pr-10">
                     <div className="mb-3 flex items-baseline justify-between gap-2">
-                      <p
-                        className={`${mono.className} text-[9px] uppercase tracking-[0.18em] text-black/45`}
-                      >
+                      <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-black/45">
                         Completed TX
                       </p>
-                      <span
-                        className={`${mono.className} hidden text-[8px] text-black/25 sm:inline`}
-                      >
+
+                      <span className="hidden text-[8px] font-medium text-black/25 sm:inline">
                         02A
                       </span>
                     </div>
-                    <p
-                      className={`${playfair.className} text-3xl font-bold leading-none tracking-tight text-black sm:text-4xl`}
-                    >
+
+                    <p className="text-3xl font-semibold leading-none tracking-tight text-black sm:text-4xl">
                       {report.completedTx.toLocaleString("id-ID")}
                     </p>
+
                     <p className="mt-2 text-[10px] text-black/40">
                       Successful transactions
                     </p>
@@ -319,22 +305,19 @@ export default function MonthlyReportPage() {
 
                   <div className="border-l border-black py-6 pl-5 sm:py-7 sm:pl-10">
                     <div className="mb-3 flex items-baseline justify-between gap-2">
-                      <p
-                        className={`${mono.className} text-[9px] uppercase tracking-[0.18em] text-black/45`}
-                      >
+                      <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-black/45">
                         Refunds
                       </p>
-                      <span
-                        className={`${mono.className} hidden text-[8px] text-black/25 sm:inline`}
-                      >
+
+                      <span className="hidden text-[8px] font-medium text-black/25 sm:inline">
                         02B
                       </span>
                     </div>
-                    <p
-                      className={`${playfair.className} text-3xl font-bold leading-none tracking-tight text-black sm:text-4xl`}
-                    >
+
+                    <p className="text-3xl font-semibold leading-none tracking-tight text-black sm:text-4xl">
                       {report.refunds.toLocaleString("id-ID")}
                     </p>
+
                     <p className="mt-2 text-[10px] text-black/40">
                       Refunded transactions
                     </p>
@@ -345,53 +328,45 @@ export default function MonthlyReportPage() {
               <section className="mt-10 sm:mt-12">
                 <div className="mb-3 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className={`${mono.className} text-[9px] text-black/30`}>
+                    <span className="text-[9px] font-medium text-black/30">
                       03
                     </span>
+
                     <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/55">
                       Growth
                     </span>
                   </div>
-                  <span
-                    className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/30`}
-                  >
+
+                  <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/30">
                     Acquisition
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2">
                   <div className="bg-black p-5 text-white sm:p-7">
-                    <p
-                      className={`${mono.className} text-[9px] uppercase tracking-[0.18em] text-white/50`}
-                    >
+                    <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/50">
                       New Users
                     </p>
-                    <p
-                      className={`${playfair.className} mt-6 text-4xl font-bold leading-none tracking-tight sm:mt-8 sm:text-5xl`}
-                    >
+
+                    <p className="mt-6 text-4xl font-semibold leading-none tracking-tight sm:mt-8 sm:text-5xl">
                       {report.newUsers.toLocaleString("id-ID")}
                     </p>
-                    <p
-                      className={`${mono.className} mt-3 text-[8px] uppercase tracking-[0.18em] text-white/30`}
-                    >
+
+                    <p className="mt-3 text-[8px] font-medium uppercase tracking-[0.18em] text-white/30">
                       Registered
                     </p>
                   </div>
 
                   <div className="border-y border-r border-black p-5 sm:p-7">
-                    <p
-                      className={`${mono.className} text-[9px] uppercase tracking-[0.18em] text-black/45`}
-                    >
+                    <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-black/45">
                       New Stores
                     </p>
-                    <p
-                      className={`${playfair.className} mt-6 text-4xl font-bold leading-none tracking-tight text-black sm:mt-8 sm:text-5xl`}
-                    >
+
+                    <p className="mt-6 text-4xl font-semibold leading-none tracking-tight text-black sm:mt-8 sm:text-5xl">
                       {report.newStores.toLocaleString("id-ID")}
                     </p>
-                    <p
-                      className={`${mono.className} mt-3 text-[8px] uppercase tracking-[0.18em] text-black/30`}
-                    >
+
+                    <p className="mt-3 text-[8px] font-medium uppercase tracking-[0.18em] text-black/30">
                       Onboarded
                     </p>
                   </div>
@@ -401,16 +376,16 @@ export default function MonthlyReportPage() {
               <section className="mt-10 sm:mt-12">
                 <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`${mono.className} text-[9px] text-black/30`}>
+                    <span className="text-[9px] font-medium text-black/30">
                       04
                     </span>
+
                     <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/55">
                       Transaction Trend
                     </span>
                   </div>
-                  <p
-                    className={`${mono.className} text-[8px] uppercase tracking-[0.18em] text-black/35`}
-                  >
+
+                  <p className="text-[8px] font-medium uppercase tracking-[0.18em] text-black/35">
                     {peakLabel}
                   </p>
                 </div>
@@ -426,11 +401,10 @@ export default function MonthlyReportPage() {
               className="group mx-auto block w-full max-w-sm bg-black py-4 text-white transition-colors duration-200 hover:bg-black/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
             >
               <span className="flex items-center justify-center gap-3">
-                <span
-                  className={`${mono.className} text-[10px] font-medium uppercase tracking-[0.28em]`}
-                >
+                <span className="text-[10px] font-medium uppercase tracking-[0.28em]">
                   Export to PDF
                 </span>
+
                 <Download
                   className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-y-0.5"
                   strokeWidth={1.5}
@@ -440,14 +414,11 @@ export default function MonthlyReportPage() {
             </button>
 
             <div className="mt-6 flex items-center justify-between gap-4 border-t border-black/10 pt-4">
-              <p
-                className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/30`}
-              >
+              <p className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/30">
                 The Archive Financial Protocol V.1.02
               </p>
-              <p
-                className={`${mono.className} hidden text-[8px] uppercase tracking-[0.2em] text-black/30 sm:block`}
-              >
+
+              <p className="hidden text-[8px] font-medium uppercase tracking-[0.2em] text-black/30 sm:block">
                 Admin Copy
               </p>
             </div>
@@ -458,7 +429,11 @@ export default function MonthlyReportPage() {
   );
 }
 
-function TrendChart({ data }: { data: { tanggal: number; jumlah: number }[] }) {
+function TrendChart({
+  data,
+}: {
+  data: { tanggal: number; jumlah: number }[];
+}) {
   const W = 300;
   const H = 90;
 
@@ -466,9 +441,8 @@ function TrendChart({ data }: { data: { tanggal: number; jumlah: number }[] }) {
     return (
       <div className="flex h-40 flex-col items-center justify-center gap-3 border border-black/15">
         <span className="h-px w-10 bg-black/15" />
-        <p
-          className={`${mono.className} text-[9px] uppercase tracking-[0.2em] text-black/30`}
-        >
+
+        <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-black/30">
           Belum ada data transaksi
         </p>
       </div>
@@ -476,23 +450,22 @@ function TrendChart({ data }: { data: { tanggal: number; jumlah: number }[] }) {
   }
 
   const max = Math.max(...data.map((d) => d.jumlah), 1);
+
   const points = data.map((d, i) => {
     const x = (i / (data.length - 1)) * W;
     const y = H - (d.jumlah / max) * (H - 20) - 10;
+
     return `${x},${y}`;
   });
 
   return (
     <div className="border border-black">
       <div className="flex items-center justify-between border-b border-black/10 px-3 py-2 sm:px-4">
-        <span
-          className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/40`}
-        >
+        <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/40">
           Daily Volume
         </span>
-        <span
-          className={`${mono.className} text-[8px] uppercase tracking-[0.2em] text-black/30`}
-        >
+
+        <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-black/30">
           {data.length} Days
         </span>
       </div>
@@ -517,12 +490,14 @@ function TrendChart({ data }: { data: { tanggal: number; jumlah: number }[] }) {
               strokeWidth="0.5"
             />
           ))}
+
           <polyline
             points={`0,${H} ${points.join(" ")} ${W},${H}`}
             fill="black"
             fillOpacity="0.04"
             stroke="none"
           />
+
           <polyline
             points={points.join(" ")}
             fill="none"
@@ -536,14 +511,11 @@ function TrendChart({ data }: { data: { tanggal: number; jumlah: number }[] }) {
       </div>
 
       <div className="flex items-center justify-between border-t border-black/10 px-3 py-2 sm:px-4">
-        <span
-          className={`${mono.className} text-[8px] uppercase tracking-[0.18em] text-black/30`}
-        >
+        <span className="text-[8px] font-medium uppercase tracking-[0.18em] text-black/30">
           Day {String(data[0].tanggal).padStart(2, "0")}
         </span>
-        <span
-          className={`${mono.className} text-[8px] uppercase tracking-[0.18em] text-black/30`}
-        >
+
+        <span className="text-[8px] font-medium uppercase tracking-[0.18em] text-black/30">
           Day {String(data[data.length - 1].tanggal).padStart(2, "0")}
         </span>
       </div>

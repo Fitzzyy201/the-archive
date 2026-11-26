@@ -1,26 +1,25 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ReceiptText, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 type JenisTransaksi = "PencairanSeller" | "FeeAdmin" | "RefundBuyer" | "WithdrawAdmin";
 
-// Struktur disamain sama model LogKeuangan + Transaksi di Prisma
 type FinanceLog = {
   id: number;
   transaksiId: number | null;
   jenisTransaksi: JenisTransaksi;
   waktuLog: string;
-  totalIn: number; // Transaksi.totalHarga
-  toSeller?: number; // 90% dari totalIn
-  adminFee?: number; // 10% dari totalIn
+  totalIn: number;
+  toSeller?: number;
+  adminFee?: number;
 };
 
 type RekeningAdmin = {
@@ -101,7 +100,6 @@ export default function AdminFinance() {
         );
       }
     } catch (err) {
-      // Backend belum nyala / endpoint belum ada: tetap kosong
       console.warn("Data finance belum bisa diambil:", err);
     } finally {
       setIsLoading(false);
@@ -166,12 +164,11 @@ export default function AdminFinance() {
   };
 
   const filtered = logs.filter((l) => matchFilter(l, filter));
-
   const filterIndex = FILTERS.indexOf(filter);
 
   return (
     <div
-      className={`${inter.className} flex min-h-screen flex-col bg-[#FAF9F6] pb-[calc(4rem+env(safe-area-inset-bottom))] text-black lg:pb-0 lg:pl-64`}
+      className={`${jakarta.className} flex min-h-screen flex-col bg-[#FAF9F6] pb-[calc(4rem+env(safe-area-inset-bottom))] text-black lg:pb-0 lg:pl-64`}
     >
       <Navbar variant="admin" />
 
@@ -187,9 +184,7 @@ export default function AdminFinance() {
           </Link>
 
           <div className="min-w-0 text-center">
-            <p
-              className={`${mono.className} text-[8px] uppercase tracking-[0.32em] text-black/40`}
-            >
+            <p className="text-[8px] uppercase tracking-[0.32em] text-black/40">
               The Archive
             </p>
             <h1
@@ -199,12 +194,7 @@ export default function AdminFinance() {
             </h1>
           </div>
 
-          <span
-            aria-hidden="true"
-            className={`${mono.className} flex h-10 w-10 shrink-0 items-center justify-center border border-black/10 text-[8px] font-medium uppercase tracking-[0.12em] text-black/35`}
-          >
-            ADM
-          </span>
+          <span aria-hidden="true" className="h-10 w-10 shrink-0" />
         </div>
       </header>
 
@@ -221,21 +211,17 @@ export default function AdminFinance() {
                   <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
                     <p
                       id="escrow-heading"
-                      className={`${mono.className} flex items-center gap-2 text-[9px] font-medium uppercase tracking-[0.22em] text-black/50 sm:text-[10px]`}
+                      className="flex items-center gap-2 text-[9px] font-medium uppercase tracking-[0.22em] text-black/50 sm:text-[10px]"
                     >
                       <span className="h-1.5 w-1.5 shrink-0 bg-black" aria-hidden="true" />
                       ADMIN ESCROW BALANCE
                     </p>
-                    <span
-                      className={`${mono.className} shrink-0 border border-black/15 px-1.5 py-0.5 text-[8px] uppercase tracking-[0.18em] text-black/40`}
-                    >
+                    <span className="shrink-0 border border-black/15 px-1.5 py-0.5 text-[8px] uppercase tracking-[0.18em] text-black/40">
                       IDR
                     </span>
                   </div>
 
-                  <p
-                    className={`${playfair.className} break-words text-[clamp(1.75rem,2.6vw,2.75rem)] font-bold leading-[1.05] tracking-tight tabular-nums text-black`}
-                  >
+                  <p className="break-words text-[clamp(1.75rem,2.6vw,2.75rem)] font-bold leading-[1.05] tracking-tight tabular-nums text-black">
                     {formatRupiah(balance)}
                   </p>
                 </div>
@@ -256,14 +242,12 @@ export default function AdminFinance() {
                 <div className="mb-5 flex items-end justify-between gap-4 border-b border-black pb-3">
                   <h2
                     id="logs-heading"
-                    className={`${playfair.className} text-xl font-bold leading-none tracking-tight text-black sm:text-2xl`}
+                    className="text-xl font-bold leading-none tracking-tight text-black sm:text-2xl"
                   >
                     TRANSACTION LOGS
                   </h2>
                   {!isLoading && (
-                    <span
-                      className={`${mono.className} shrink-0 pb-0.5 text-[9px] uppercase tracking-[0.18em] text-black/40`}
-                    >
+                    <span className="shrink-0 pb-0.5 text-[9px] uppercase tracking-[0.18em] text-black/40">
                       {filtered.length} RECORDS
                     </span>
                   )}
@@ -309,9 +293,7 @@ export default function AdminFinance() {
                       aria-hidden="true"
                       className="h-px w-12 animate-pulse bg-black/30"
                     />
-                    <p
-                      className={`${mono.className} text-center text-[10px] uppercase tracking-[0.28em] text-black/40`}
-                    >
+                    <p className="text-center text-[10px] uppercase tracking-[0.28em] text-black/40">
                       Memuat data...
                     </p>
                   </div>
@@ -346,14 +328,12 @@ export default function AdminFinance() {
           >
             <div className="flex items-start justify-between gap-4 border-b border-black/10 px-5 py-5 sm:px-6">
               <div>
-                <p
-                  className={`${mono.className} text-[8px] uppercase tracking-[0.3em] text-black/40`}
-                >
+                <p className="text-[8px] uppercase tracking-[0.3em] text-black/40">
                   The Archive / Admin
                 </p>
                 <h2
                   id="withdraw-title"
-                  className={`${playfair.className} mt-1.5 text-xl font-bold leading-none tracking-tight text-black sm:text-2xl`}
+                  className="mt-1.5 text-xl font-bold leading-none tracking-tight text-black sm:text-2xl"
                 >
                   WITHDRAW FUNDS
                 </h2>
@@ -379,13 +359,13 @@ export default function AdminFinance() {
               <div className="mb-5">
                 <label
                   htmlFor="withdraw-amount"
-                  className={`${mono.className} block text-[9px] font-medium uppercase tracking-[0.2em] text-black/55`}
+                  className="block text-[9px] font-medium uppercase tracking-[0.2em] text-black/55"
                 >
                   WITHDRAWAL AMOUNT
                 </label>
                 <div className="mt-2 flex items-stretch border border-black/20 bg-white transition-colors focus-within:border-black">
                   <span
-                    className={`${mono.className} flex items-center border-r border-black/10 bg-[#FAF9F6] px-3 text-[11px] text-black/50`}
+                    className="flex items-center border-r border-black/10 bg-[#FAF9F6] px-3 text-[11px] text-black/50"
                     aria-hidden="true"
                   >
                     Rp
@@ -402,12 +382,12 @@ export default function AdminFinance() {
                     disabled={isWithdrawing}
                     aria-describedby="withdraw-available"
                     placeholder="0"
-                    className={`${mono.className} w-full min-w-0 bg-transparent px-3 py-3 text-sm tabular-nums text-black outline-none placeholder:text-black/30 disabled:opacity-50`}
+                    className="w-full min-w-0 bg-transparent px-3 py-3 text-sm tabular-nums text-black outline-none placeholder:text-black/30 disabled:opacity-50"
                   />
                 </div>
                 <p
                   id="withdraw-available"
-                  className={`${mono.className} mt-2 text-[9px] uppercase tracking-[0.1em] text-black/45`}
+                  className="mt-2 text-[9px] uppercase tracking-[0.1em] text-black/45"
                 >
                   Saldo tersedia: {formatRupiah(balance)}
                 </p>
@@ -416,7 +396,7 @@ export default function AdminFinance() {
               <div className="mb-6">
                 <label
                   htmlFor="withdraw-account"
-                  className={`${mono.className} block text-[9px] font-medium uppercase tracking-[0.2em] text-black/55`}
+                  className="block text-[9px] font-medium uppercase tracking-[0.2em] text-black/55"
                 >
                   TRANSFER TO
                 </label>
@@ -425,7 +405,7 @@ export default function AdminFinance() {
                   value={transferTo}
                   onChange={(event) => setTransferTo(event.target.value)}
                   disabled={rekeningList.length === 0 || isWithdrawing}
-                  className={`${mono.className} mt-2 w-full border border-black/20 bg-white px-3 py-3 text-[11px] text-black outline-none transition-colors focus:border-black disabled:cursor-not-allowed disabled:bg-black/[0.03] disabled:text-black/40`}
+                  className="mt-2 w-full border border-black/20 bg-white px-3 py-3 text-[11px] text-black outline-none transition-colors focus:border-black disabled:cursor-not-allowed disabled:bg-black/[0.03] disabled:text-black/40"
                 >
                   {rekeningList.length === 0 ? (
                     <option value="">Tidak ada rekening admin tersedia</option>
@@ -479,9 +459,7 @@ function EmptyState() {
           aria-hidden="true"
         />
       </span>
-      <p
-        className={`${playfair.className} mt-6 text-lg font-semibold tracking-tight text-black`}
-      >
+      <p className="mt-6 text-lg font-semibold tracking-tight text-black">
         Belum ada riwayat transaksi
       </p>
       <span className="mt-4 h-px w-10 bg-black/15" aria-hidden="true" />
@@ -501,15 +479,11 @@ function LogCard({ log }: { log: FinanceLog }) {
       <div className="flex items-center justify-between gap-3 border-b border-black/10 px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           <span className="h-1.5 w-1.5 shrink-0 bg-black" aria-hidden="true" />
-          <p
-            className={`${mono.className} truncate text-[11px] font-medium tracking-[0.06em] text-black`}
-          >
+          <p className="truncate text-[11px] font-medium tracking-[0.06em] text-black">
             TX-{log.transaksiId ?? log.id}
           </p>
         </div>
-        <p
-          className={`${mono.className} shrink-0 whitespace-nowrap text-[9px] uppercase tracking-[0.12em] text-black/45`}
-        >
+        <p className="shrink-0 whitespace-nowrap text-[9px] uppercase tracking-[0.12em] text-black/45">
           {formatTanggal(log.waktuLog)}
         </p>
       </div>
@@ -518,17 +492,13 @@ function LogCard({ log }: { log: FinanceLog }) {
         <dl className="space-y-2">
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-[11px] text-black/55">Total In:</dt>
-            <dd
-              className={`${mono.className} shrink-0 whitespace-nowrap text-[13px] tabular-nums text-black`}
-            >
+            <dd className="shrink-0 whitespace-nowrap text-[13px] tabular-nums text-black">
               {formatRupiah(log.totalIn)}
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-[11px] text-black/45">To Seller (90%):</dt>
-            <dd
-              className={`${mono.className} shrink-0 whitespace-nowrap text-[13px] tabular-nums text-black/60`}
-            >
+            <dd className="shrink-0 whitespace-nowrap text-[13px] tabular-nums text-black/60">
               {formatRupiah(toSeller)}
             </dd>
           </div>
@@ -539,9 +509,7 @@ function LogCard({ log }: { log: FinanceLog }) {
             <span className="h-1 w-1 bg-black" aria-hidden="true" />
             Admin Fee (10%):
           </span>
-          <span
-            className={`${mono.className} shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-black`}
-          >
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-black">
             {formatRupiah(adminFee)}
           </span>
         </div>

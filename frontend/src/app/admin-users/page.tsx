@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, UserX } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
-const inter = Inter({ subsets: ["latin"] });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 type Tab = "BUYERS" | "SELLERS";
 
@@ -19,14 +20,17 @@ type UserItem = {
   email: string;
   role: "Admin" | "Buyer" | "Seller";
   statusAkun: "Aktif" | "Suspend";
-  createdAt?: string; // belum ada di schema User, dipakai kalau nanti ditambahin
+  createdAt?: string;
   toko?: { namaToko: string } | null;
 };
 
 function formatJoined(dateStr?: string) {
   if (!dateStr) return "-";
   return new Date(dateStr)
-    .toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    .toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    })
     .toUpperCase();
 }
 
@@ -42,6 +46,7 @@ export default function AdminUsers() {
       try {
         const role = activeTab === "BUYERS" ? "Buyer" : "Seller";
         const res = await fetch(`http://localhost:3001/admin/users?role=${role}`);
+
         if (res.ok) {
           const data = await res.json();
           setUsers(Array.isArray(data) ? data : []);
@@ -49,7 +54,6 @@ export default function AdminUsers() {
           setUsers([]);
         }
       } catch (err) {
-        // Backend belum nyala / endpoint belum ada: tetap kosong
         console.warn("Data user belum bisa diambil:", err);
         setUsers([]);
       } finally {
@@ -68,9 +72,12 @@ export default function AdminUsers() {
         `http://localhost:3001/admin/users/${userId}/suspend`,
         { method: "PATCH" }
       );
+
       if (res.ok) {
         setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, statusAkun: "Suspend" } : u))
+          prev.map((u) =>
+            u.id === userId ? { ...u, statusAkun: "Suspend" } : u
+          )
         );
       } else {
         alert("Gagal suspend akun.");
@@ -84,17 +91,21 @@ export default function AdminUsers() {
   const filteredUsers = users.filter((u) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
+
     const displayName = (u.toko?.namaToko || u.nama || "").toLowerCase();
+
     return displayName.includes(q) || u.email.toLowerCase().includes(q);
   });
 
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}>
+    <div
+      className={`${jakarta.className} min-h-screen flex flex-col bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}
+    >
       <Navbar variant="admin" />
 
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-black/10 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 w-full max-w-3xl items-center justify-between px-5 sm:px-8 lg:px-10">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8 lg:px-10">
           <Link
             href="/admin-dashboard"
             aria-label="Kembali ke dashboard admin"
@@ -103,9 +114,7 @@ export default function AdminUsers() {
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
 
-          <p
-            className={`${mono.className} text-[9px] uppercase tracking-[0.32em] text-black/45`}
-          >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/45">
             THE ARCHIVE
           </p>
 
@@ -114,11 +123,9 @@ export default function AdminUsers() {
       </header>
 
       <main className="w-full flex-1">
-        <div className="mx-auto w-full max-w-3xl px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-12 lg:px-10">
+        <div className="mx-auto w-full max-w-6xl px-5 pb-10 pt-8 sm:px-8 sm:pb-12 sm:pt-12 lg:px-10">
           <section className="border-b border-black pb-6 sm:pb-8">
-            <h1
-              className={`${playfair.className} text-3xl font-bold leading-none tracking-tight text-black sm:text-4xl lg:text-5xl`}
-            >
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-black sm:text-3xl">
               USER MANAGEMENT
             </h1>
           </section>
@@ -132,15 +139,18 @@ export default function AdminUsers() {
             >
               <span
                 aria-hidden="true"
-                className={`pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-black transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none ${
-                  activeTab === "SELLERS" ? "translate-x-full" : "translate-x-0"
+                className={`pointer-events-none absolute inset-y-0 left-0 z-0 w-1/2 bg-black transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none ${
+                  activeTab === "SELLERS"
+                    ? "translate-x-full"
+                    : "translate-x-0"
                 }`}
               />
+
               <button
                 type="button"
                 onClick={() => setActiveTab("BUYERS")}
                 aria-pressed={activeTab === "BUYERS"}
-                className={`relative z-10 py-3.5 text-[11px] font-semibold tracking-[0.18em] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black motion-reduce:transition-none ${
+                className={`relative z-10 py-3.5 text-[11px] font-semibold tracking-[0.18em] transition-colors duration-300 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black motion-reduce:transition-none ${
                   activeTab === "BUYERS"
                     ? "text-white"
                     : "text-black/50 hover:text-black"
@@ -148,11 +158,12 @@ export default function AdminUsers() {
               >
                 BUYERS
               </button>
+
               <button
                 type="button"
                 onClick={() => setActiveTab("SELLERS")}
                 aria-pressed={activeTab === "SELLERS"}
-                className={`relative z-10 border-l border-black py-3.5 text-[11px] font-semibold tracking-[0.18em] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black motion-reduce:transition-none ${
+                className={`relative z-10 border-l border-black py-3.5 text-[11px] font-semibold tracking-[0.18em] transition-colors duration-300 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black motion-reduce:transition-none ${
                   activeTab === "SELLERS"
                     ? "text-white"
                     : "text-black/50 hover:text-black"
@@ -168,13 +179,14 @@ export default function AdminUsers() {
                 className="h-4 w-4 shrink-0 text-black/40"
                 aria-hidden="true"
               />
+
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="SEARCH SHOP NAME OR EMAIL..."
                 aria-label="Cari nama toko atau email"
-                className={`${mono.className} w-full bg-transparent text-[10px] uppercase tracking-[0.08em] text-black placeholder:text-black/30 focus:outline-none`}
+                className="w-full bg-transparent text-[10px] font-medium uppercase tracking-[0.08em] text-black placeholder:text-black/30 focus:outline-none"
               />
             </div>
 
@@ -188,9 +200,8 @@ export default function AdminUsers() {
                   className="h-px w-12 animate-pulse bg-black/30"
                   aria-hidden="true"
                 />
-                <p
-                  className={`${mono.className} text-center text-[10px] uppercase tracking-[0.28em] text-black/40`}
-                >
+
+                <p className="text-center text-[10px] font-medium uppercase tracking-[0.28em] text-black/40">
                   Memuat data...
                 </p>
               </div>
@@ -225,12 +236,13 @@ function EmptyState({ tab }: { tab: Tab }) {
           aria-hidden="true"
         />
       </span>
-      <p
-        className={`${playfair.className} mt-6 text-lg font-semibold tracking-tight text-black`}
-      >
+
+      <p className="mt-6 text-lg font-semibold tracking-tight text-black">
         {tab === "BUYERS" ? "Belum ada buyer" : "Belum ada seller"}
       </p>
+
       <span className="mt-4 h-px w-10 bg-black/15" aria-hidden="true" />
+
       <p className="mt-4 max-w-[24ch] text-xs leading-relaxed text-black/45">
         Daftar user akan muncul di sini setelah ada yang terdaftar.
       </p>
@@ -247,34 +259,35 @@ function UserRow({
   tab: Tab;
   onSuspend: () => void;
 }) {
-  const displayName = tab === "SELLERS" ? user.toko?.namaToko || user.nama : user.nama;
+  const displayName =
+    tab === "SELLERS" ? user.toko?.namaToko || user.nama : user.nama;
+
   const detailHref =
-    tab === "BUYERS" ? `/admin-users/buyer/${user.id}` : `/admin-users/seller/${user.id}`;
+    tab === "BUYERS"
+      ? `/admin-users/buyer/${user.id}`
+      : `/admin-users/seller/${user.id}`;
 
   return (
     <article className="border border-black/15 bg-white transition-colors duration-200 hover:border-black">
       <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
         <div className="min-w-0">
-          <h3
-            className={`${playfair.className} truncate text-lg font-bold leading-tight tracking-tight text-black`}
-          >
+          <h3 className="truncate text-lg font-bold leading-tight tracking-tight text-black">
             {displayName || "Tanpa Nama"}
           </h3>
-          <p
-            className={`${mono.className} mt-1.5 truncate text-[10px] tracking-[0.04em] text-black/55`}
-          >
+
+          <p className="mt-1.5 truncate text-[10px] font-medium tracking-[0.04em] text-black/55">
             {user.email}
           </p>
+
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             <Link
               href={detailHref}
-              className={`${mono.className} inline-flex border-b border-black pb-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black`}
+              className="inline-flex border-b border-black pb-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
             >
               READ MORE
             </Link>
-            <span
-              className={`${mono.className} text-[9px] uppercase tracking-[0.14em] text-black/35`}
-            >
+
+            <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
               JOINED {formatJoined(user.createdAt)}
             </span>
           </div>

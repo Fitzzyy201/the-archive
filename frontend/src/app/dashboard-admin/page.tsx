@@ -1,15 +1,24 @@
+
 "use client";
 
 import Link from "next/link";
-import { LogOut, MessageCircle } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import { usePathname } from "next/navigation";
+import {
+  LogOut,
+  MessageCircle,
+  Home,
+  ShieldCheck,
+  Users,
+  FileText,
+  AlertTriangle,
+} from "lucide-react";
 import { Playfair_Display, Inter, JetBrains_Mono } from "next/font/google";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"] });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-// Data ringkasan: nanti dipasang fetch ke backend
+// Data ringkasan — nanti fetch dari backend (agregasi dari Transaksi, User, dsb)
 const overview = {
   systemStatus: "ACTIVE" as "ACTIVE" | "MAINTENANCE",
   platformRevenue: 0,
@@ -23,89 +32,91 @@ function formatRupiah(angka: number) {
 
 export default function AdminDashboard() {
   return (
-    <div className={`${inter.className} min-h-screen flex flex-col bg-[#FAF9F6] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pl-64 lg:pb-0`}>
-      <Navbar variant="admin" />
+    <div className={`${inter.className} min-h-screen flex flex-col bg-white`}>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 sm:px-10 py-5 bg-white border-b border-black/10">
-          <h1 className={`${playfair.className} text-lg sm:text-xl font-bold tracking-wide text-black`}>
-            DASHBOARD OVERVIEW
-          </h1>
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-black/5 rounded-sm transition">
-              <MessageCircle className="w-5 h-5 text-black" />
-            </button>
-            <Link
-              href="/admin-portal"
-              className="flex items-center gap-2 text-xs font-semibold text-red-600 hover:text-red-700 transition border border-red-200 px-3 py-1.5 rounded-sm bg-red-50/50"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">LOGOUT</span>
-            </Link>
-          </div>
-        </div>
+      <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b">
+        <Link href="/login-admin">
+          <LogOut className="w-5 h-5 text-black" />
+        </Link>
+        <h1 className={`${playfair.className} text-lg sm:text-xl font-bold tracking-wide text-black`}>
+          ADMIN DASHBOARD
+        </h1>
+        <button>
+          <MessageCircle className="w-5 h-5 text-black" />
+        </button>
+      </div>
 
-        {/* Dashboard Body */}
-        <div className="flex-1 w-full px-6 sm:px-10 md:px-14 py-8 max-w-5xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-black mb-1">System Status & Revenue</h2>
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  overview.systemStatus === "ACTIVE" ? "bg-green-600" : "bg-amber-500"
-                }`}
-              />
-              <span className={`${mono.className} text-xs font-medium tracking-wide text-black/60`}>
-                SYSTEM STATUS: {overview.systemStatus}
-              </span>
-            </div>
+      <div className="flex-1 w-full px-6 sm:px-12 md:px-16 py-8 md:flex md:justify-center">
+        <div className="w-full md:max-w-xl">
+          <h2 className="text-base font-bold italic text-black mb-2">Overview</h2>
+          <div className="flex items-center gap-2 mb-6">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                overview.systemStatus === "ACTIVE" ? "bg-green-600" : "bg-yellow-500"
+              }`}
+            />
+            <span className="text-xs font-medium tracking-wide text-gray-600">
+              SYSTEM STATUS: {overview.systemStatus}
+            </span>
           </div>
 
-          {/* Revenue Card */}
-          <div className="bg-white border border-black/10 rounded-sm p-6 mb-6 shadow-sm">
-            <p className={`${mono.className} text-[11px] font-semibold tracking-wider text-black/40 mb-2 uppercase`}>
-              Platform Revenue (10% Service Fee)
+          <div className="border border-gray-300 rounded-md p-5 mb-4">
+            <p className="text-[11px] font-semibold tracking-wide text-gray-500 mb-2">
+              PLATFORM REVENUE (10% FEE)
             </p>
-            <p className={`${playfair.className} text-3xl sm:text-4xl font-bold text-black`}>
+            <p className={`${playfair.className} text-2xl sm:text-3xl font-bold text-black`}>
               {formatRupiah(overview.platformRevenue)}
             </p>
           </div>
 
-          {/* Users Stat Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <div className="bg-black text-white rounded-sm p-6 shadow-sm">
-              <p className={`${mono.className} text-[11px] font-semibold tracking-wider text-white/50 mb-2 uppercase`}>
-                Total Registered Buyers
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-black text-white rounded-md p-5">
+              <p className="text-[11px] font-semibold tracking-wide text-white/60 mb-2">
+                TOTAL BUYERS
               </p>
-              <p className={`${playfair.className} text-3xl sm:text-4xl font-bold`}>
+              <p className={`${playfair.className} text-2xl sm:text-3xl font-bold`}>
                 {overview.totalBuyers.toLocaleString("id-ID")}
               </p>
             </div>
-            <div className="bg-white border border-black/10 rounded-sm p-6 shadow-sm">
-              <p className={`${mono.className} text-[11px] font-semibold tracking-wider text-black/40 mb-2 uppercase`}>
-                Total Active Sellers
+            <div className="border border-gray-300 rounded-md p-5">
+              <p className="text-[11px] font-semibold tracking-wide text-gray-500 mb-2">
+                TOTAL SELLERS
               </p>
-              <p className={`${playfair.className} text-3xl sm:text-4xl font-bold text-black`}>
+              <p className={`${playfair.className} text-2xl sm:text-3xl font-bold text-black`}>
                 {overview.totalSellers.toLocaleString("id-ID")}
               </p>
             </div>
           </div>
 
-          <div className="border-t border-black/10 pt-6">
-            <p className={`${mono.className} text-center text-[10px] tracking-[0.2em] text-black/30 mb-6`}>
-              THE ARCHIVE FINANCIAL PROTOCOL V.1.02
-            </p>
-
-            <button className={`${mono.className} w-full bg-black text-white text-xs font-semibold tracking-widest uppercase rounded-sm py-4 hover:bg-black/85 transition`}>
-              Generate Monthly Report
-            </button>
-          </div>
+          <button className="w-full bg-black text-white rounded-md py-3.5 font-medium tracking-wide hover:bg-gray-900 transition">
+            GENERATE MONTHLY REPORT
+          </button>
         </div>
+      </div>
 
+      <div className="bg-black flex items-center justify-around py-3">
+        <AdminNavItem href="/admin-dashboard" icon={<Home className="w-5 h-5" />} />
+        <AdminNavItem href="/admin-verifikasi" icon={<ShieldCheck className="w-5 h-5" />} />
+        <AdminNavItem href="/admin-users" icon={<Users className="w-5 h-5" />} />
+        <AdminNavItem href="/admin-laporan" icon={<FileText className="w-5 h-5" />} />
+        <AdminNavItem href="/admin-komplain" icon={<AlertTriangle className="w-5 h-5" />} />
       </div>
     </div>
+  );
+}
+
+function AdminNavItem({ href, icon }: { href: string; icon: React.ReactNode }) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      className={`p-2 rounded-md transition ${
+        isActive ? "text-white" : "text-white/35 hover:text-white/60"
+      }`}
+    >
+      {icon}
+    </Link>
   );
 }

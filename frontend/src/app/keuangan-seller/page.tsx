@@ -10,11 +10,18 @@ import {
   ReceiptText,
   Wallet,
 } from "lucide-react";
-import { Geist, Instrument_Serif } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
 
-const sans = Geist({ subsets: ["latin"] });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 type JenisTransaksi = "PencairanSeller" | "FeeAdmin" | "RefundBuyer" | "WithdrawAdmin";
 
@@ -36,9 +43,18 @@ function formatRupiah(angka: number) {
 function formatWaktu(dateStr: string) {
   const d = new Date(dateStr);
   const tanggal = d
-    .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    .toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
     .toUpperCase();
-  const jam = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":");
+  const jam = d
+    .toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(".", ":");
   return `${tanggal}, ${jam}`;
 }
 
@@ -74,6 +90,7 @@ export default function KeuanganSeller() {
         const res = await fetch(`http://localhost:3001/keuangan/toko/${tokoId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+
         if (res.ok) {
           const data = await res.json();
           setSaldo(data.saldoToko ?? 0);
@@ -94,7 +111,7 @@ export default function KeuanganSeller() {
   const tampil = showAll ? riwayat : riwayat.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className={`${sans.className} min-h-screen bg-[#F7F5F0] text-[#141414] md:pl-56`}>
+    <div className={`${jakarta.className} min-h-screen bg-[#F7F5F0] text-[#141414] md:pl-56`}>
       <Navbar variant="seller" />
 
       {/* Main content */}
@@ -109,8 +126,9 @@ export default function KeuanganSeller() {
             >
               <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
             </Link>
+
             <h1
-              className={`${serif.className} text-[1.9rem] leading-none tracking-[0.04em] text-black sm:text-[2.25rem]`}
+              className={`${playfair.className} text-2xl sm:text-3xl font-semibold tracking-tight text-black`}
             >
               KEUANGAN
             </h1>
@@ -135,15 +153,13 @@ export default function KeuanganSeller() {
 
                     <div className="relative">
                       <div className="flex items-center justify-between gap-4">
-                        <p className="text-[11px] font-medium tracking-[0.22em] uppercase text-white/55">
+                        <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/55">
                           JUMLAH SALDO
                         </p>
                         <Wallet className="h-4 w-4 text-white/35" strokeWidth={1.5} />
                       </div>
 
-                      <p
-                        className={`${serif.className} mt-7 min-w-0 text-[2rem] leading-[1.08] tracking-[0.01em] break-words text-white tabular-nums sm:text-[2.4rem] lg:text-[1.9rem] xl:text-[2.75rem]`}
-                      >
+                      <p className="mt-7 min-w-0 text-[2rem] leading-[1.08] font-semibold tracking-[0.01em] break-words text-white tabular-nums sm:text-[2.4rem] lg:text-[1.9rem] xl:text-[2.75rem]">
                         {formatRupiah(saldo)}
                       </p>
 
@@ -178,18 +194,20 @@ export default function KeuanganSeller() {
                         strokeWidth={1.75}
                       />
                     </div>
+
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-black/50">
                         NOTIF PENARIKAN DANA
                       </p>
                       <p className="mt-1.5 text-sm leading-snug text-black/65">
                         Penarikan{" "}
-                        <span className="font-medium tabular-nums text-black">
+                        <span className="font-semibold tabular-nums text-black">
                           {formatRupiah(penarikanPending)}
                         </span>{" "}
                         sedang diproses
                       </p>
                     </div>
+
                     <ChevronRight
                       className="mt-1 h-4 w-4 shrink-0 text-black/25 sm:mt-0"
                       strokeWidth={1.75}
@@ -199,11 +217,10 @@ export default function KeuanganSeller() {
 
                 {/* History pembayaran */}
                 <div className="mb-1 flex flex-col items-start gap-2.5 border-b border-black/15 pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-                  <h2
-                    className={`${serif.className} text-[1.5rem] leading-none tracking-[0.05em] text-black sm:text-[1.75rem]`}
-                  >
+                  <h2 className="text-[1.5rem] leading-none font-semibold tracking-[0.05em] text-black sm:text-[1.75rem]">
                     HISTORY PEMBAYARAN
                   </h2>
+
                   {riwayat.length > PREVIEW_COUNT && (
                     <button
                       onClick={() => setShowAll((s) => !s)}
@@ -254,7 +271,8 @@ function EmptyState() {
       <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full border border-black/15 bg-white">
         <ReceiptText className="h-5 w-5 text-black/40" strokeWidth={1.5} />
       </div>
-      <p className="text-sm font-medium text-black/75">
+
+      <p className="text-sm font-semibold text-black/75">
         Belum ada riwayat pembayaran
       </p>
       <p className="mt-2 max-w-[260px] text-[13px] leading-relaxed text-black/45">
@@ -270,15 +288,16 @@ function LogRow({ log }: { log: LogKeuangan }) {
   return (
     <div className="flex items-start justify-between gap-3 border-b border-black/[0.08] py-4 transition-colors duration-200 hover:bg-black/[0.02] sm:items-center sm:gap-5 sm:py-5">
       <div className="min-w-0">
-        <p className="truncate text-[15px] leading-snug font-medium text-black sm:text-base">
+        <p className="truncate text-[15px] leading-snug font-semibold text-black sm:text-base">
           {judulLog(log)}
         </p>
         <p className="mt-1.5 text-xs leading-none tracking-[0.05em] text-black/45">
           {formatWaktu(log.waktuLog)}
         </p>
       </div>
+
       <p
-        className={`shrink-0 text-right text-[15px] leading-none font-medium whitespace-nowrap tabular-nums sm:text-[17px] ${
+        className={`shrink-0 text-right text-[15px] leading-none font-semibold whitespace-nowrap tabular-nums sm:text-[17px] ${
           keluar ? "text-red-600" : "text-black"
         }`}
       >
@@ -288,4 +307,3 @@ function LogRow({ log }: { log: LogKeuangan }) {
     </div>
   );
 }
-
