@@ -47,7 +47,6 @@ export const ADMIN_NAV_ITEMS = [
   { href: "/admin-verifikasi", icon: ShieldCheck, label: "VERIFIKASI" },
   { href: "/admin-users", icon: Users, label: "USERS" },
   { href: "/admin-finance", icon: Wallet, label: "FINANCE" },
-  { href: "/admin-laporan", icon: FileText, label: "LAPORAN" },
   { href: "/admin-komplain", icon: AlertTriangle, label: "KOMPLAIN" },
 ];
 
